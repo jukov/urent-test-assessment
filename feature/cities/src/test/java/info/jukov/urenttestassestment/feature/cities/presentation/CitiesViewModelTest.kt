@@ -74,6 +74,16 @@ class CitiesViewModelTest {
     }
 
     @Test
+    fun `query state is updated synchronously`() = runTest(dispatcher) {
+        val repository = FakeRepository(mutableListOf(success(city(1), total = 1), success(city(2), total = 1)))
+        val viewModel = viewModel(repository)
+
+        viewModel.onQueryChanged("Moscow")
+
+        assertEquals("Moscow", viewModel.container.stateFlow.value.query)
+    }
+
+    @Test
     fun `every raw query change restarts debounce`() = runTest(dispatcher) {
         val repository = FakeRepository(mutableListOf(success(city(1), total = 1), success(city(2), total = 1)))
         val viewModel = viewModel(repository)

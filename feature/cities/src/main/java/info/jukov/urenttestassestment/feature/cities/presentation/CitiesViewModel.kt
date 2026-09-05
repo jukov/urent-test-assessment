@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.ContainerHost
+import org.orbitmvi.orbit.blockingIntent
 import org.orbitmvi.orbit.viewmodel.container
 
 public class CitiesViewModel(
@@ -40,7 +41,7 @@ public class CitiesViewModel(
     public fun onQueryChanged(value: String) {
         latestQuery = value
         savedStateHandle[QUERY_KEY] = value
-        intent { reduce { state.copy(query = value) } }
+        blockingIntent { reduce { state.copy(query = value) } }
         debounceJob?.cancel()
         debounceJob = viewModelScope.launch {
             delay(SEARCH_DEBOUNCE_MILLIS)
