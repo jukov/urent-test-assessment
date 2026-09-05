@@ -119,7 +119,7 @@ public class CitiesViewModel(
     }
 
     private fun publishRefreshFailure(effect: PaginationEffect.RefreshFailure) = intent {
-        postSideEffect(CitiesSideEffect.ShowRefreshFailure(errorCode(effect.cause)))
+        postSideEffect(CitiesSideEffect.ShowRefreshFailure(effect.cause.toCitiesError()))
     }
 
     public companion object {
@@ -136,14 +136,14 @@ private fun PaginationState<City>.toUi(query: String, formatter: CountryNameForm
 
         PaginationState.Empty -> CitiesContentState.Empty(query)
 
-        is PaginationState.EmptyFailure -> CitiesContentState.EmptyFailure(errorCode(cause))
+        is PaginationState.EmptyFailure -> CitiesContentState.EmptyFailure(cause.toCitiesError())
 
         is PaginationState.Content -> CitiesContentState.Content(items.map { it.toUi(formatter) })
 
         is PaginationState.ContentProgress -> CitiesContentState.ContentProgress(items.map { it.toUi(formatter) })
 
         is PaginationState.ContentFailure -> {
-            CitiesContentState.ContentFailure(items.map { it.toUi(formatter) }, errorCode(cause))
+            CitiesContentState.ContentFailure(items.map { it.toUi(formatter) }, cause.toCitiesError())
         }
 
         is PaginationState.ContentRefreshing -> CitiesContentState.ContentRefreshing(items.map { it.toUi(formatter) })
@@ -153,13 +153,6 @@ private fun PaginationState<City>.toUi(query: String, formatter: CountryNameForm
 
 private fun City.toUi(formatter: CountryNameFormatter) = CityUi(id, "$name, ${formatter.format(countryCode)}")
 
-private fun errorCode(cause: Throwable): String = (cause as? CitiesRequestException)?.error?.userMessage() ?: "unknown"
-
-private fun CitiesError.userMessage(): String = when (this) {
-    CitiesError.Network -> "network"
-    CitiesError.Server -> "server"
-    CitiesError.InvalidResponse -> "invalid_response"
-    CitiesError.Unknown -> "unknown"
-}
+private fun Throwable.toCitiesError(): CitiesError = (this as? CitiesRequestException)?.error ?: CitiesError.Unknown
 
 private class CitiesRequestException(val error: CitiesError) : RuntimeException(error.toString())

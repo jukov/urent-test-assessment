@@ -220,11 +220,10 @@ class CitiesViewModelTest {
             FakeRepository(mutableListOf(CitiesResult.Failure(CitiesError.Server), success(city(1), total = 1)))
         val viewModel = viewModel(repository)
         advanceUntilIdle()
-        assertTrue(
-            viewModel.container.stateFlow.first {
-                it.content is CitiesContentState.EmptyFailure
-            }.content is CitiesContentState.EmptyFailure
-        )
+        val failure = viewModel.container.stateFlow.first {
+            it.content is CitiesContentState.EmptyFailure
+        }.content as CitiesContentState.EmptyFailure
+        assertEquals(CitiesError.Server, failure.error)
 
         viewModel.retry()
         advanceUntilIdle()
@@ -312,7 +311,7 @@ class CitiesViewModelTest {
         viewModel.refresh()
         advanceUntilIdle()
 
-        assertEquals(CitiesSideEffect.ShowRefreshFailure("network"), sideEffect.await())
+        assertEquals(CitiesSideEffect.ShowRefreshFailure(CitiesError.Network), sideEffect.await())
         val content = viewModel.container.stateFlow.value.content as CitiesContentState.Content
         assertEquals(listOf(1L), content.cities.map(CityUi::id))
     }

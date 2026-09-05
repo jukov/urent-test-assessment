@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import info.jukov.urenttestassestment.feature.cities.R
+import info.jukov.urenttestassestment.feature.cities.domain.CitiesError
 import org.koin.androidx.compose.koinViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -26,7 +27,7 @@ public fun CitiesRoute(onOpenCity: (Long) -> Unit = {}, viewModel: CitiesViewMod
             is CitiesSideEffect.OpenCity -> onOpenCity(effect.cityId)
 
             is CitiesSideEffect.ShowRefreshFailure -> snackbarHostState.showSnackbar(
-                if (effect.message == "network") networkError else genericError
+                if (effect.error == CitiesError.Network) networkError else genericError
             )
         }
     }

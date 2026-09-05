@@ -13,21 +13,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import info.jukov.urenttestassestment.feature.cities.R
+import info.jukov.urenttestassestment.feature.cities.domain.CitiesError
 
 @Composable
-internal fun MessageState(message: String, retry: (() -> Unit)?) {
+internal fun FailureState(error: CitiesError, onRetry: () -> Unit) {
     Column(
         Modifier.fillMaxWidth().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(message, textAlign = TextAlign.Center)
-        if (retry != null) Button(onClick = retry) { Text(stringResource(R.string.cities_retry)) }
+        Text(errorText(error), textAlign = TextAlign.Center)
+        Button(onClick = onRetry) { Text(stringResource(R.string.cities_retry)) }
     }
 }
 
 @Composable
-internal fun errorText(code: String): String = when (code) {
-    "network" -> stringResource(R.string.cities_error_network)
-    else -> stringResource(R.string.cities_error_generic)
+internal fun errorText(error: CitiesError): String = when (error) {
+    CitiesError.Network -> stringResource(R.string.cities_error_network)
+
+    CitiesError.Server,
+    CitiesError.InvalidResponse,
+    CitiesError.Unknown -> stringResource(R.string.cities_error_generic)
 }

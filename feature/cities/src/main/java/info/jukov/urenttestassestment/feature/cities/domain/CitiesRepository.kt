@@ -12,9 +12,9 @@ public sealed interface CitiesResult<out T> {
     public data class Failure(val error: CitiesError) : CitiesResult<Nothing>
 }
 
-public sealed interface CitiesError {
-    public data object Network : CitiesError
-    public data object Server : CitiesError
-    public data object InvalidResponse : CitiesError
-    public data object Unknown : CitiesError
+public enum class CitiesError {
+    Network,
+    Server,
+    InvalidResponse,
+    Unknown
 }

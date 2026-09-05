@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -82,7 +83,11 @@ public fun CitiesScreen(
             when (val content = state.content) {
                 CitiesContentState.EmptyProgress -> CitiesSkeleton()
 
-                is CitiesContentState.Empty -> MessageState(stringResource(R.string.cities_empty), null)
+                is CitiesContentState.Empty -> Text(
+                    text = stringResource(R.string.cities_empty),
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    textAlign = TextAlign.Center
+                )
 
                 is CitiesContentState.EmptyFailure -> Box(
                     modifier = Modifier
@@ -90,7 +95,7 @@ public fun CitiesScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    MessageState(errorText(content.message), onRetry)
+                    FailureState(error = content.error, onRetry = onRetry)
                 }
 
                 is CitiesContentState.Content,
@@ -168,7 +173,7 @@ private fun PaginationFooter(content: CitiesContentState, onRetry: () -> Unit) {
                     CircularProgressIndicator(Modifier.size(24.dp))
                 }
 
-                is CitiesContentState.ContentFailure -> MessageState(errorText(content.message), onRetry)
+                is CitiesContentState.ContentFailure -> FailureState(error = content.error, onRetry = onRetry)
 
                 else -> Unit
             }

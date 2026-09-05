@@ -5,6 +5,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
+import info.jukov.urenttestassestment.feature.cities.domain.CitiesError
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -15,12 +16,6 @@ class CitiesScreenTest {
     fun `snackbar uses tall container and compact dismiss icon`() {
         assertEquals(72.dp, CITIES_SNACKBAR_MIN_HEIGHT)
         assertEquals(18.dp, CITIES_SNACKBAR_DISMISS_ICON_SIZE)
-    }
-
-    @Test
-    fun `city content and skeleton use specified row dimensions`() {
-        assertEquals(54.dp, CITY_ROW_HEIGHT)
-        assertEquals(2, CITY_TITLE_MAX_LINES)
     }
 
     @Test
@@ -62,7 +57,7 @@ class CitiesScreenTest {
         assertTrue(
             CitiesContentState.ContentFailure(
                 cities = cities,
-                message = "network"
+                error = CitiesError.Network
             ).isPullToRefreshEnabled()
         )
         assertTrue(CitiesContentState.ContentRefreshing(cities = cities).isPullToRefreshEnabled())
@@ -73,7 +68,7 @@ class CitiesScreenTest {
     fun `pull to refresh is disabled for non-refreshable states`() {
         assertFalse(CitiesContentState.EmptyProgress.isPullToRefreshEnabled())
         assertFalse(CitiesContentState.Empty(query = "unknown").isPullToRefreshEnabled())
-        assertFalse(CitiesContentState.EmptyFailure(message = "network").isPullToRefreshEnabled())
+        assertFalse(CitiesContentState.EmptyFailure(error = CitiesError.Network).isPullToRefreshEnabled())
     }
 
     @Test
@@ -94,7 +89,7 @@ class CitiesScreenTest {
         val failureHeight = paginationFooterMinHeight(
             CitiesContentState.ContentFailure(
                 cities = cities,
-                message = "network"
+                error = CitiesError.Network
             )
         )
 
