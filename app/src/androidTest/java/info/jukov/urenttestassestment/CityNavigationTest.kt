@@ -1,38 +1,37 @@
 package info.jukov.urenttestassestment
 
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import info.jukov.urenttestassestment.core.ui.R as UiR
-import info.jukov.urenttestassestment.core.ui.city.CityDetails
 import info.jukov.urenttestassestment.core.ui.theme.URentTheme
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 class CityNavigationTest {
+    // Queue callbacks from Orbit's worker dispatcher for execution by the Compose test clock.
     @get:Rule
-    val compose = createComposeRule()
+    val compose = createComposeRule(effectContext = StandardTestDispatcher())
+
+    private val fixture = CitiesTestFixture()
 
     @Test
     fun tabsReplaceContentWithoutWaitingForAnAnimation() {
@@ -40,12 +39,13 @@ class CityNavigationTest {
         compose.setContent {
             URentTheme {
                 CityNavigation(
-                    listContent = { Text("List content") },
+                    listContent = { fixture.Route(it) },
                     mapContent = { Text("Map content") }
                 )
             }
         }
-        compose.onNodeWithText("List content").assertIsDisplayed()
+        completeInitialLoad()
+        compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed()
         compose.mainClock.autoAdvance = false
 
         fun switchTab(label: Int, shown: String, removed: String) {
@@ -59,8 +59,8 @@ class CityNavigationTest {
             compose.onNodeWithText(removed).assertDoesNotExist()
         }
 
-        switchTab(R.string.tab_map, "Map content", "List content")
-        switchTab(R.string.tab_cities, "List content", "Map content")
+        switchTab(R.string.tab_map, "Map content", "Moscow & York, Russia")
+        switchTab(R.string.tab_cities, "Moscow & York, Russia", "Map content")
     }
 
     @Test
@@ -69,15 +69,17 @@ class CityNavigationTest {
         compose.setContent {
             URentTheme {
                 CityNavigation(
-                    listContent = {
-                        var query by rememberSaveable { mutableStateOf("") }
-                        TextField(query, { query = it }, Modifier.testTag("query"))
-                    },
+                    listContent = { fixture.Route(it) },
                     mapContent = { Text("Map content") }
                 )
             }
         }
-        compose.onNodeWithTag("query").performTextInput("Moscow")
+        completeInitialLoad()
+        compose.onNode(hasSetTextAction()).performTextInput("Moscow")
+        compose.waitUntil(5_000) { fixture.requests.size == 2 }
+        fixture.succeed(1)
+        awaitCityRow()
+        compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed()
         val map = compose.onAllNodes(
             isSelectable() and hasAnyDescendant(hasContentDescription(context.getString(R.string.tab_map))),
             useUnmergedTree = true
@@ -90,7 +92,7 @@ class CityNavigationTest {
             isSelectable() and hasAnyDescendant(hasContentDescription(context.getString(R.string.tab_cities))),
             useUnmergedTree = true
         )[0].performClick().assertIsSelected()
-        compose.onNodeWithTag("query").assertTextContains("Moscow")
+        compose.onNode(hasSetTextAction()).assertTextContains("Moscow")
     }
 
     @Test
@@ -98,12 +100,15 @@ class CityNavigationTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         compose.setContent {
             URentTheme {
-                CityNavigation(listContent = { open ->
-                    Button({ open(CityDetails(7, "Moscow", "RU", 12_655_000)) }) { Text("Open city") }
-                })
+                CityNavigation(listContent = { fixture.Route(it) })
             }
         }
-        compose.onNodeWithText("Open city").performClick()
+        completeInitialLoad()
+        compose.onNodeWithText("Moscow & York, Russia").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodesWithText("Moscow & York").fetchSemanticsNodes().size == 1
+        }
+        compose.waitForIdle()
         val search = compose.onNodeWithText(context.getString(UiR.string.city_search))
         search.assertIsDisplayed()
         val originalBounds = search.fetchSemanticsNode().boundsInRoot
@@ -118,7 +123,7 @@ class CityNavigationTest {
 
         compose.mainClock.autoAdvance = true
         search.assertDoesNotExist()
-        compose.onNodeWithText("Open city").assertIsDisplayed()
+        compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed()
         compose.onNodeWithContentDescription(context.getString(R.string.tab_map)).assertIsDisplayed()
     }
 
@@ -128,23 +133,37 @@ class CityNavigationTest {
         val restoration = StateRestorationTester(compose)
         restoration.setContent {
             URentTheme {
-                CityNavigation(listContent = { open ->
-                    androidx.compose.foundation.layout.Column {
-                        var query by rememberSaveable { mutableStateOf("") }
-                        TextField(query, { query = it }, Modifier.testTag("query"))
-                        Button({ open(CityDetails(7, "Moscow & York", "RU", 12_655_000)) }) { Text("Open city") }
-                    }
-                })
+                CityNavigation(listContent = { fixture.Route(it) })
             }
         }
-        compose.onNodeWithTag("query").performTextInput("Moscow")
-        compose.onNodeWithText("Open city").performClick()
+        completeInitialLoad()
+        compose.onNode(hasSetTextAction()).performTextInput("Moscow")
+        compose.waitUntil(5_000) { fixture.requests.size == 2 }
+        fixture.succeed(1)
+        awaitCityRow()
+        compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed()
+        compose.onNodeWithText("Moscow & York, Russia").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodesWithText("Moscow & York").fetchSemanticsNodes().size == 1
+        }
+        compose.waitForIdle()
         compose.onNodeWithText("Moscow & York").assertIsDisplayed()
         compose.onNodeWithText(context.getString(UiR.string.city_search)).assertIsDisplayed()
         compose.onNodeWithContentDescription(context.getString(R.string.tab_map)).assertDoesNotExist()
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithText("Moscow & York").assertIsDisplayed()
         compose.onNodeWithContentDescription(context.getString(UiR.string.city_back)).performClick()
-        compose.onNodeWithTag("query").assertTextContains("Moscow")
+        compose.onNode(hasSetTextAction()).assertTextContains("Moscow")
+    }
+
+    private fun completeInitialLoad() {
+        compose.waitUntil(5_000) { fixture.requests.size == 1 }
+        fixture.succeed(0)
+        awaitCityRow()
+        compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed()
+    }
+
+    private fun awaitCityRow() = compose.waitUntil(5_000) {
+        compose.onAllNodesWithText("Moscow & York, Russia").fetchSemanticsNodes().size == 1
     }
 }
