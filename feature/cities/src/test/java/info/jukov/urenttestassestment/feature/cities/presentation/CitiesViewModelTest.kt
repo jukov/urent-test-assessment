@@ -13,7 +13,10 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
@@ -23,6 +26,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -371,6 +375,106 @@ class CitiesViewModelTest {
             containerHost.onCityClick(7)
             expectSideEffect(CitiesSideEffect.OpenCity(CityDetails(7, "Москва", "RU", 12_655_000)))
             cancelAndIgnoreRemainingItems()
+        }
+    }
+
+    @Test
+    fun `late old search success cannot replace newer search results`() = runTest(dispatcher) {
+        assertLateSearchIgnored(success(city(99), total = 1))
+    }
+
+    @Test
+    fun `late old search failure cannot replace newer search results`() = runTest(dispatcher) {
+        assertLateSearchIgnored(CitiesResult.Failure(CitiesError.Server), whileLoading = true)
+    }
+
+    private suspend fun kotlinx.coroutines.test.TestScope.assertLateSearchIgnored(
+        late: CitiesResult<Page<City>>,
+        whileLoading: Boolean = false
+    ) {
+        val repository = NonCooperativeRepository()
+        val vm = viewModel(repository)
+        runCurrent()
+        repository.responses[0].complete(success(city(1), total = 1))
+        vm.container.stateFlow.first { it.content is CitiesContentState.ContentEndReached }
+        vm.onQueryChanged("Old")
+        advanceTimeBy(300)
+        runCurrent()
+        vm.onQueryChanged("New")
+        advanceTimeBy(300)
+        runCurrent()
+        assertTrue(repository.jobs[1].isCancelled)
+        if (whileLoading) {
+            vm.container.stateFlow.first { it.content is CitiesContentState.EmptyProgress }
+            repository.responses[1].complete(late)
+            repository.jobs[1].join()
+            vm.onCityClick(-1).join()
+            assertEquals(CitiesContentState.EmptyProgress, vm.container.stateFlow.value.content)
+        }
+        repository.responses[2].complete(success(city(2), total = 1))
+        vm.container.stateFlow.first {
+            (it.content as? CitiesContentState.ContentEndReached)?.cities?.singleOrNull()?.id ==
+                2L
+        }
+        val expected = vm.container.stateFlow.value
+        assertEquals("New", expected.query)
+        assertEquals(listOf(2L), (expected.content as CitiesContentState.ContentEndReached).cities.map(CityUi::id))
+        repository.responses[1].complete(late)
+        repository.jobs[1].join()
+        vm.onCityClick(-1).join()
+        assertEquals(expected, vm.container.stateFlow.value)
+        assertEquals(listOf(null, "Old", "New"), repository.requests.map(Request::query))
+    }
+
+    @Test
+    fun `new search cancels pagination and ignores its late response`() = runTest(dispatcher) {
+        val repository = NonCooperativeRepository()
+        val vm = viewModel(repository)
+        runCurrent()
+        repository.responses[0].complete(success(city(1), total = 60))
+        vm.container.stateFlow.first { it.content is CitiesContentState.Content }
+        vm.loadNextPage()
+        runCurrent()
+        vm.onQueryChanged("New")
+        advanceTimeBy(300)
+        runCurrent()
+        assertTrue(repository.jobs[1].isCancelled)
+        vm.container.stateFlow.first { it.content is CitiesContentState.EmptyProgress }
+        repository.responses[2].complete(success(city(2), total = 40))
+        vm.container.stateFlow.first { (it.content as? CitiesContentState.Content)?.cities?.singleOrNull()?.id == 2L }
+        repository.responses[1].complete(success(city(99), page = 2, total = 60))
+        repository.jobs[1].join()
+        vm.onCityClick(-1).join()
+        assertEquals(
+            listOf(2L),
+            (vm.container.stateFlow.value.content as CitiesContentState.Content).cities.map(CityUi::id)
+        )
+        vm.loadNextPage()
+        runCurrent()
+        repository.responses[3].complete(success(city(3), page = 2, total = 40))
+        vm.container.stateFlow.first { it.content is CitiesContentState.ContentEndReached }
+        assertEquals(
+            listOf(2L, 3L),
+            (vm.container.stateFlow.value.content as CitiesContentState.ContentEndReached).cities.map(CityUi::id)
+        )
+        assertEquals(
+            listOf(Request(null, 1, 20), Request(null, 2, 20), Request("New", 1, 20), Request("New", 2, 20)),
+            repository.requests
+        )
+    }
+
+    // Simulates a transport that delivers a response even after its caller is cancelled.
+    private class NonCooperativeRepository : CitiesRepository {
+        val requests = mutableListOf<Request>()
+        val jobs = mutableListOf<Job>()
+        val responses = mutableListOf<CompletableDeferred<CitiesResult<Page<City>>>>()
+
+        override suspend fun cities(query: String?, page: Int, limit: Int): CitiesResult<Page<City>> {
+            requests += Request(query, page, limit)
+            jobs += currentCoroutineContext()[Job]!!
+            val response = CompletableDeferred<CitiesResult<Page<City>>>()
+            responses += response
+            return withContext(NonCancellable) { response.await() }
         }
     }
 
