@@ -10,6 +10,12 @@ object URentSpacing {
 
 object URentShapes {
     val radius16 = RoundedCornerShape(16.dp)
+    val bottomRadius16 = RoundedCornerShape(
+        topStart = 0.dp,
+        topEnd = 0.dp,
+        bottomEnd = 16.dp,
+        bottomStart = 16.dp
+    )
 }
 
 object URentSizes {
