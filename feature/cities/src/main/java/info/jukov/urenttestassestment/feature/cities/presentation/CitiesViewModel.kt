@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import info.jukov.urenttestassestment.core.model.City
+import info.jukov.urenttestassestment.core.pagination.PaginationEffect
 import info.jukov.urenttestassestment.core.pagination.PaginationState
 import info.jukov.urenttestassestment.core.pagination.PaginationStateMachine
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesError
@@ -97,8 +98,11 @@ public class CitiesViewModel(
                 }
 
                 is CitiesResult.Failure -> if (expectedGeneration == generation && query == activeQuery) {
-                    pagination.fail(CitiesRequestException(result.error))
+                    val effect = pagination.fail(CitiesRequestException(result.error))
                     publishState()
+                    if (effect is PaginationEffect.RefreshFailure) {
+                        publishRefreshFailure(effect)
+                    }
                 }
             }
         }
@@ -106,8 +110,15 @@ public class CitiesViewModel(
 
     private fun publishState() = intent {
         reduce {
-            state.copy(content = pagination.state.toUi(activeQuery, countryFormatter))
+            state.copy(
+                query = latestQuery,
+                content = pagination.state.toUi(activeQuery, countryFormatter)
+            )
         }
+    }
+
+    private fun publishRefreshFailure(effect: PaginationEffect.RefreshFailure) = intent {
+        postSideEffect(CitiesSideEffect.ShowRefreshFailure(errorCode(effect.cause)))
     }
 
     public companion object {

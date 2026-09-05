@@ -13,6 +13,10 @@ public sealed interface PaginationState<out T> {
     public data class ContentEndReached<T>(val items: List<T>) : PaginationState<T>
 }
 
+public sealed interface PaginationEffect {
+    public data class RefreshFailure(val cause: Throwable) : PaginationEffect
+}
+
 /** Reusable state machine for cursor-free, 1-based page APIs. */
 public class PaginationStateMachine<T, Id>(private val idOf: (T) -> Id) {
     public var state: PaginationState<T> = PaginationState.EmptyProgress
@@ -89,22 +93,24 @@ public class PaginationStateMachine<T, Id>(private val idOf: (T) -> Id) {
         }
     }
 
-    public fun fail(cause: Throwable) {
-        state = when (val current = state) {
-            PaginationState.EmptyProgress -> PaginationState.EmptyFailure(cause)
+    public fun fail(cause: Throwable): PaginationEffect? {
+        when (val current = state) {
+            PaginationState.EmptyProgress -> state = PaginationState.EmptyFailure(cause)
 
-            is PaginationState.ContentProgress -> PaginationState.ContentFailure(current.items, cause)
+            is PaginationState.ContentProgress -> state = PaginationState.ContentFailure(current.items, cause)
 
             is PaginationState.ContentRefreshing -> {
                 nextPage = pageBeforeRefresh ?: nextPage
                 pageBeforeRefresh = null
                 val restored = stateBeforeRefresh ?: PaginationState.Content(current.items)
                 stateBeforeRefresh = null
-                restored
+                state = restored
+                return PaginationEffect.RefreshFailure(cause)
             }
 
-            else -> current
+            else -> Unit
         }
+        return null
     }
 
     private fun reachedEnd(result: Page<T>, accumulatedSize: Int): Boolean {

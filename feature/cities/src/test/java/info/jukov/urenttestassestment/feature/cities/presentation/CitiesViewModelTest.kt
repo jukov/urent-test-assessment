@@ -8,8 +8,10 @@ import info.jukov.urenttestassestment.feature.cities.domain.CitiesRepository
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesResult
 import java.util.Locale
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -255,6 +257,28 @@ class CitiesViewModelTest {
             it.content is CitiesContentState.Content
         }.content as CitiesContentState.Content
         assertEquals(listOf(2L), refreshed.cities.map(CityUi::id))
+    }
+
+    @Test
+    fun `refresh failure restores content and emits error side effect`() = runTest(dispatcher) {
+        val repository = FakeRepository(
+            mutableListOf(
+                success(city(1), total = 40),
+                CitiesResult.Failure(CitiesError.Network)
+            )
+        )
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+        val sideEffect = async(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.container.sideEffectFlow.first()
+        }
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertEquals(CitiesSideEffect.ShowRefreshFailure("network"), sideEffect.await())
+        val content = viewModel.container.stateFlow.value.content as CitiesContentState.Content
+        assertEquals(listOf(1L), content.cities.map(CityUi::id))
     }
 
     @Test

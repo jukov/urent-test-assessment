@@ -20,4 +20,5 @@ public sealed interface CitiesContentState {
 
 public sealed interface CitiesSideEffect {
     public data class OpenCity(val cityId: Long) : CitiesSideEffect
+    public data class ShowRefreshFailure(val message: String) : CitiesSideEffect
 }

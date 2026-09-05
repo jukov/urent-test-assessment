@@ -2,6 +2,7 @@ package info.jukov.urenttestassestment.core.pagination
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -17,7 +18,7 @@ class PaginationStateMachineTest {
     @Test
     fun `initial progress transitions to empty failure`() {
         val failure = IllegalStateException("failed")
-        machine.fail(failure)
+        assertNull(machine.fail(failure))
         assertEquals(PaginationState.EmptyFailure(failure), machine.state)
     }
 
@@ -56,7 +57,7 @@ class PaginationStateMachineTest {
         val failure = IllegalStateException("failed")
         machine.append(Page(items = listOf(Item(1), Item(2)), page = 1, limit = 2, total = 4))
         machine.startAppend()
-        machine.fail(failure)
+        assertNull(machine.fail(failure))
         assertEquals(PaginationState.ContentFailure(listOf(Item(1), Item(2)), failure), machine.state)
         assertTrue(machine.startAppend())
         assertEquals(PaginationState.ContentProgress(listOf(Item(1), Item(2))), machine.state)
@@ -77,10 +78,11 @@ class PaginationStateMachineTest {
         val failure = IllegalStateException("failed")
         machine.append(Page(items = listOf(Item(1), Item(2)), page = 1, limit = 2, total = 4))
         machine.startRefresh()
-        machine.fail(failure)
+        val effect = machine.fail(failure)
 
         assertEquals(PaginationState.Content(listOf(Item(1), Item(2))), machine.state)
         assertEquals(2, machine.nextPage)
+        assertEquals(PaginationEffect.RefreshFailure(failure), effect)
     }
 
     @Test
@@ -91,10 +93,11 @@ class PaginationStateMachineTest {
         assertEquals(PaginationState.ContentEndReached(items), machine.state)
 
         machine.startRefresh()
-        machine.fail(failure)
+        val effect = machine.fail(failure)
 
         assertEquals(PaginationState.ContentEndReached(items), machine.state)
         assertEquals(2, machine.nextPage)
+        assertEquals(PaginationEffect.RefreshFailure(failure), effect)
     }
 
     @Test
@@ -107,10 +110,11 @@ class PaginationStateMachineTest {
         machine.fail(appendFailure)
 
         machine.startRefresh()
-        machine.fail(refreshFailure)
+        val effect = machine.fail(refreshFailure)
 
         assertEquals(PaginationState.ContentFailure(items, appendFailure), machine.state)
         assertEquals(2, machine.nextPage)
+        assertEquals(PaginationEffect.RefreshFailure(refreshFailure), effect)
     }
 
     @Test
@@ -120,10 +124,12 @@ class PaginationStateMachineTest {
         machine.startAppend()
 
         machine.startRefresh()
-        machine.fail(IllegalStateException("refresh failed"))
+        val refreshFailure = IllegalStateException("refresh failed")
+        val effect = machine.fail(refreshFailure)
 
         assertEquals(PaginationState.Content(items), machine.state)
         assertEquals(2, machine.nextPage)
+        assertEquals(PaginationEffect.RefreshFailure(refreshFailure), effect)
     }
 
     @Test
