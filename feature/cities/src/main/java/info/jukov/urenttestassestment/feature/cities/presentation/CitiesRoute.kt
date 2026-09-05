@@ -17,6 +17,7 @@ public fun CitiesRoute(onOpenCity: (Long) -> Unit = {}, viewModel: CitiesViewMod
         state = state,
         onQueryChanged = viewModel::onQueryChanged,
         onLoadNextPage = viewModel::loadNextPage,
+        onRefresh = viewModel::refresh,
         onRetry = viewModel::retry,
         onCityClick = viewModel::onCityClick
     )

@@ -30,6 +30,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -55,6 +56,7 @@ public fun CitiesScreen(
     state: CitiesState,
     onQueryChanged: (String) -> Unit,
     onLoadNextPage: () -> Unit,
+    onRefresh: () -> Unit,
     onRetry: () -> Unit,
     onCityClick: (Long) -> Unit,
     modifier: Modifier = Modifier
@@ -83,49 +85,73 @@ public fun CitiesScreen(
         )
         Spacer(Modifier.height(16.dp))
         when (val content = state.content) {
-            CitiesContentState.Initial, CitiesContentState.Loading -> CitiesSkeleton()
-            is CitiesContentState.Content -> CitiesList(content, onLoadNextPage, onRetry, onCityClick)
+            CitiesContentState.EmptyProgress -> CitiesSkeleton()
+
             is CitiesContentState.Empty -> MessageState(stringResource(R.string.cities_empty), null)
-            is CitiesContentState.Error -> MessageState(errorText(content.message), onRetry)
+
+            is CitiesContentState.EmptyFailure -> MessageState(errorText(content.message), onRetry)
+
+            is CitiesContentState.Content,
+            is CitiesContentState.ContentProgress,
+            is CitiesContentState.ContentFailure,
+            is CitiesContentState.ContentRefreshing,
+            is CitiesContentState.ContentEndReached -> CitiesList(
+                content,
+                onLoadNextPage,
+                onRefresh,
+                onRetry,
+                onCityClick
+            )
         }
     }
 }
 
 @Composable
 private fun CitiesList(
-    content: CitiesContentState.Content,
+    content: CitiesContentState,
     onLoadNextPage: () -> Unit,
+    onRefresh: () -> Unit,
     onRetry: () -> Unit,
     onCityClick: (Long) -> Unit
 ) {
+    val cities = content.cities()
     val listState = rememberLazyListState()
-    val shouldLoadMore by remember(content.cities.size) {
+    val shouldLoadMore by remember(cities.size) {
         derivedStateOf {
             val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            content.cities.isNotEmpty() && lastVisible >= content.cities.lastIndex - PREFETCH_DISTANCE
+            cities.isNotEmpty() && lastVisible >= cities.lastIndex - PREFETCH_DISTANCE
         }
     }
-    LaunchedEffect(shouldLoadMore, content.pagination) {
-        if (shouldLoadMore && content.pagination is CitiesPaginationState.Idle) onLoadNextPage()
+    LaunchedEffect(shouldLoadMore, content) {
+        if (shouldLoadMore && content is CitiesContentState.Content) onLoadNextPage()
     }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        state = listState,
-        contentPadding = PaddingValues(bottom = 24.dp)
+    PullToRefreshBox(
+        isRefreshing = content is CitiesContentState.ContentRefreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
     ) {
-        items(content.cities, key = CityUi::id) { city ->
-            CityRow(city, onCityClick)
-            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-        }
-        item {
-            when (val pagination = content.pagination) {
-                CitiesPaginationState.Loading -> Box(Modifier.fillMaxWidth().padding(20.dp), Alignment.Center) {
-                    CircularProgressIndicator(Modifier.size(24.dp))
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding = PaddingValues(bottom = 24.dp)
+        ) {
+            items(cities, key = CityUi::id) { city ->
+                CityRow(city, onCityClick)
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+            }
+            item {
+                when (content) {
+                    is CitiesContentState.ContentProgress -> Box(
+                        Modifier.fillMaxWidth().padding(20.dp),
+                        Alignment.Center
+                    ) {
+                        CircularProgressIndicator(Modifier.size(24.dp))
+                    }
+
+                    is CitiesContentState.ContentFailure -> MessageState(errorText(content.message), onRetry)
+
+                    else -> Unit
                 }
-
-                is CitiesPaginationState.Error -> MessageState(errorText(pagination.message), onRetry)
-
-                CitiesPaginationState.EndReached, CitiesPaginationState.Idle -> Unit
             }
         }
     }
@@ -199,16 +225,32 @@ private fun errorText(code: String): String = when (code) {
     else -> stringResource(R.string.cities_error_generic)
 }
 
+private fun CitiesContentState.cities(): List<CityUi> = when (this) {
+    is CitiesContentState.Content -> cities
+
+    is CitiesContentState.ContentProgress -> cities
+
+    is CitiesContentState.ContentFailure -> cities
+
+    is CitiesContentState.ContentRefreshing -> cities
+
+    is CitiesContentState.ContentEndReached -> cities
+
+    CitiesContentState.EmptyProgress,
+    is CitiesContentState.Empty,
+    is CitiesContentState.EmptyFailure -> emptyList()
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun CitiesContentPreview() = URentTheme {
     CitiesScreen(
         CitiesState(
             content = CitiesContentState.Content(
-                listOf(CityUi(1, "Москва, Россия"), CityUi(2, "Лондон, Великобритания")),
-                CitiesPaginationState.Idle
+                listOf(CityUi(1, "Москва, Россия"), CityUi(2, "Лондон, Великобритания"))
             )
         ),
+        {},
         {},
         {},
         {},
@@ -219,7 +261,7 @@ private fun CitiesContentPreview() = URentTheme {
 @Preview(showBackground = true)
 @Composable
 private fun CitiesLoadingPreview() = URentTheme {
-    CitiesScreen(CitiesState(content = CitiesContentState.Loading), {}, {}, {}, {})
+    CitiesScreen(CitiesState(), {}, {}, {}, {}, {})
 }
 
 private const val SKELETON_ITEMS = 5
