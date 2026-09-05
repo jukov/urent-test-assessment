@@ -1,4 +1,8 @@
 <resources>
     <string name="tab_cities">Список городов</string>
     <string name="tab_map">Карта</string>
+    <string name="startup_offline_title">Нет подключения\nк интернету</string>
+    <string name="startup_offline_message">Проверьте соединение и попробуйте снова. Без интернета данные не загрузятся</string>
+    <string name="startup_retry">Попробовать снова</string>
+    <string name="startup_checking">Проверяем соединение…</string>
 </resources>

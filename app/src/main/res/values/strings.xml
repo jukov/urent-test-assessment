@@ -2,4 +2,8 @@
     <string name="app_name" translatable="false">URent test assestment</string>
     <string name="tab_cities">Cities</string>
     <string name="tab_map">Map</string>
+    <string name="startup_offline_title">No internet connection</string>
+    <string name="startup_offline_message">Check your connection and try again. Data cannot load without internet.</string>
+    <string name="startup_retry">Try again</string>
+    <string name="startup_checking">Checking connection…</string>
 </resources>

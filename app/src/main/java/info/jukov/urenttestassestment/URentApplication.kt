@@ -5,6 +5,7 @@ import info.jukov.urenttestassestment.core.logging.Logging
 import info.jukov.urenttestassestment.core.network.networkModule
 import info.jukov.urenttestassestment.feature.cities.presentation.citiesModule
 import info.jukov.urenttestassestment.feature.map.presentation.mapModule
+import info.jukov.urenttestassestment.startup.startupModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -22,7 +23,7 @@ class URentApplication : Application() {
     private fun setupDi() {
         startKoin {
             androidContext(this@URentApplication)
-            modules(networkModule, citiesModule, mapModule)
+            modules(networkModule, citiesModule, mapModule, startupModule)
         }
     }
 }
