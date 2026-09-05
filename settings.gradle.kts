@@ -31,3 +31,5 @@ include(":core:network")
 include(":core:model")
 include(":core:pagination")
 include(":feature:cities")
+
+include(":feature:map")

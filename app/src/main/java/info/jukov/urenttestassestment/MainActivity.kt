@@ -6,7 +6,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import info.jukov.urenttestassestment.core.ui.theme.URentTheme
-import info.jukov.urenttestassestment.feature.cities.presentation.CitiesRoute
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,7 +16,7 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             URentTheme {
-                CitiesRoute()
+                CityNavigation()
             }
         }
     }

@@ -18,7 +18,12 @@ ktor = "3.5.1"
 koin = "4.1.1"
 timber = "5.0.1"
 
+maplibre = "13.4.1"
+navigation = "2.10.0"
+
 [libraries]
+maplibre = { module = "org.maplibre.gl:android-sdk-opengl", version.ref = "maplibre" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 detekt-gradle-plugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 ktlint-gradle-plugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintPlugin" }

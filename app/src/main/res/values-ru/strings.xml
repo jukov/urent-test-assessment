@@ -1,0 +1,4 @@
+<resources>
+    <string name="tab_cities">Список городов</string>
+    <string name="tab_map">Карта</string>
+</resources>
