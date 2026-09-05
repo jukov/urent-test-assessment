@@ -43,5 +43,23 @@ class MapCityCacheTest {
         assertSame(cached, mergeMapCities(cached, emptyList()))
     }
 
+    @Test
+    fun `refreshing a full cache changes recency without evicting existing cities`() {
+        val cached = (1L..1_000L).map(::city)
+
+        assertEquals(cached.reversed(), mergeMapCities(cached, cached.reversed()))
+    }
+
+    @Test
+    fun `duplicate ids in one response keep the last value without extra eviction`() {
+        val cached = (1L..1_000L).map(::city)
+        val latest = city(1).copy(name = "Latest")
+        val merged = mergeMapCities(cached, listOf(city(1), latest, city(1_001)))
+
+        assertEquals(1_000, merged.size)
+        assertEquals((3L..1_000L).toList() + listOf(1L, 1_001L), merged.map { it.id })
+        assertEquals(latest, merged.single { it.id == 1L })
+    }
+
     private fun city(id: Long) = MapCityUi(id, "City $id", 55.75, 37.62, 100)
 }
