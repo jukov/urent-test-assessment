@@ -1,5 +1,7 @@
 package info.jukov.urenttestassestment
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -71,7 +73,11 @@ internal fun CityNavigation(
         NavHost(
             navController,
             startDestination = CityListDestination,
-            modifier = Modifier.padding(padding).consumeWindowInsets(padding)
+            modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
         ) {
             composable<CityListDestination> { listContent() }
             composable<CityMapDestination> { mapContent() }

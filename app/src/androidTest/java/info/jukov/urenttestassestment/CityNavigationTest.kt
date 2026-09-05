@@ -29,6 +29,35 @@ class CityNavigationTest {
     val compose = createComposeRule()
 
     @Test
+    fun tabsReplaceContentWithoutWaitingForAnAnimation() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        compose.setContent {
+            URentTheme {
+                CityNavigation(
+                    listContent = { Text("List content") },
+                    mapContent = { Text("Map content") }
+                )
+            }
+        }
+        compose.onNodeWithText("List content").assertIsDisplayed()
+        compose.mainClock.autoAdvance = false
+
+        fun switchTab(label: Int, shown: String, removed: String) {
+            compose.onAllNodes(
+                isSelectable() and hasAnyDescendant(hasContentDescription(context.getString(label))),
+                useUnmergedTree = true
+            )[0].performClick()
+            // Apply navigation and settle composition without allowing a fade to finish.
+            compose.mainClock.advanceTimeBy(64)
+            compose.onNodeWithText(shown).assertIsDisplayed()
+            compose.onNodeWithText(removed).assertDoesNotExist()
+        }
+
+        switchTab(R.string.tab_map, "Map content", "List content")
+        switchTab(R.string.tab_cities, "List content", "Map content")
+    }
+
+    @Test
     fun tabsSwitchContentAndRestoreListInput() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         compose.setContent {
