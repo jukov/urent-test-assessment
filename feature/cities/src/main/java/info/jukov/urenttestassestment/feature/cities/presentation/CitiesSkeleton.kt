@@ -44,7 +44,7 @@ internal fun CitiesSkeleton() {
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         repeat(SKELETON_ITEMS) { index ->
             Row(
-                Modifier.fillMaxWidth().height(76.dp),
+                Modifier.fillMaxWidth().height(CITY_ROW_HEIGHT),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {

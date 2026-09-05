@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -179,13 +181,19 @@ private fun CityRow(city: CityUi, onClick: (Long) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .height(CITY_ROW_HEIGHT)
             .clickable { onClick(city.id) }
-            .padding(vertical = 20.dp, horizontal = 20.dp),
+            .padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Icon(URentIcons.Pin, contentDescription = null, tint = Color.Unspecified, modifier = Modifier.size(24.dp))
-        Text(city.title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = city.title,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = CITY_TITLE_MAX_LINES,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -240,4 +248,6 @@ private fun CitiesLoadingPreview() = URentTheme {
 }
 
 private const val PREFETCH_DISTANCE = 4
+internal const val CITY_TITLE_MAX_LINES = 2
+internal val CITY_ROW_HEIGHT = 54.dp
 private val PAGINATION_FOOTER_MIN_HEIGHT = 176.dp

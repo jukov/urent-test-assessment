@@ -12,6 +12,12 @@ import org.junit.Test
 
 class CitiesScreenTest {
     @Test
+    fun `city content and skeleton use specified row dimensions`() {
+        assertEquals(54.dp, CITY_ROW_HEIGHT)
+        assertEquals(2, CITY_TITLE_MAX_LINES)
+    }
+
+    @Test
     fun `header has no elevation at top of list`() {
         assertEquals(0.dp, headerElevationFor(isScrolled = false))
     }
