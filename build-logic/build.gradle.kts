@@ -22,6 +22,10 @@ gradlePlugin {
             id = "urent.testing"
             implementationClass = "TestingConventionPlugin"
         }
+        register("androidLibrary") {
+            id = "urent.android.library"
+            implementationClass = "AndroidLibraryConventionPlugin"
+        }
     }
 }
 
