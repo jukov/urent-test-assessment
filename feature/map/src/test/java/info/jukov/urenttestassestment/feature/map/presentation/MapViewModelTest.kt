@@ -190,9 +190,9 @@ class MapViewModelTest {
         val repo = object : MapRepository {
             override suspend fun cities(viewport: MapViewport) = MapResult.Success(emptyList())
         }
-        MapViewModel(repo, saved).onCameraIdle(camera, viewport)
+        MapViewModel(repo, saved, dispatcher).onCameraIdle(camera, viewport)
         advanceUntilIdle()
-        assertEquals(camera, MapViewModel(repo, saved).camera)
+        assertEquals(camera, MapViewModel(repo, saved, dispatcher).camera)
         assertEquals(setOf("map_lat", "map_lng", "map_zoom"), saved.keys())
     }
 
@@ -200,7 +200,8 @@ class MapViewModelTest {
         object : MapRepository {
             override suspend fun cities(viewport: MapViewport) = load(viewport)
         },
-        SavedStateHandle()
+        SavedStateHandle(),
+        dispatcher
     )
 
     private fun success(id: Long) = MapResult.Success(listOf(City(id, "City $id", "RU", 100, 55.75, 37.62)))

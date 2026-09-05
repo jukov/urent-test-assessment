@@ -6,15 +6,21 @@ import androidx.lifecycle.viewModelScope
 import info.jukov.urenttestassestment.feature.map.domain.MapRepository
 import info.jukov.urenttestassestment.feature.map.domain.MapResult
 import info.jukov.urenttestassestment.feature.map.domain.MapViewport
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.blockingIntent
 import org.orbitmvi.orbit.viewmodel.container
 
-public class MapViewModel(private val repository: MapRepository, private val savedState: SavedStateHandle) :
-    ViewModel(),
+public class MapViewModel(
+    private val repository: MapRepository,
+    private val savedState: SavedStateHandle,
+    private val workerDispatcher: CoroutineDispatcher = Dispatchers.Default
+) : ViewModel(),
     ContainerHost<MapState, Nothing> {
     override val container = container<MapState, Nothing>(MapState())
     private var viewport: MapViewport? = null
@@ -50,17 +56,23 @@ public class MapViewModel(private val repository: MapRepository, private val sav
         request = viewModelScope.launch {
             if (debounce) delay(VIEWPORT_DEBOUNCE_MILLIS)
             val result = repository.cities(viewport)
+            val cached = container.stateFlow.value.cities
+            val cities = if (result is MapResult.Success) {
+                withContext(workerDispatcher) {
+                    mergeMapCities(
+                        cached,
+                        result.cities.map { MapCityUi(it.id, it.name, it.latitude, it.longitude, it.population) }
+                    )
+                }
+            } else {
+                cached
+            }
             blockingIntent {
                 if (expected != generation) return@blockingIntent
                 reduce {
                     when (result) {
                         is MapResult.Success -> MapState(
-                            cities = mergeMapCities(
-                                state.cities,
-                                result.cities.map {
-                                    MapCityUi(it.id, it.name, it.latitude, it.longitude, it.population)
-                                }
-                            ),
+                            cities = cities,
                             loadState = if (result.cities.isEmpty()) MapLoadState.Empty else MapLoadState.Content
                         )
 

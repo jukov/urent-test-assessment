@@ -3,6 +3,10 @@ package info.jukov.urenttestassestment.feature.map.presentation
 import android.graphics.Color
 import info.jukov.urenttestassestment.feature.map.domain.Coordinate
 import info.jukov.urenttestassestment.feature.map.domain.MapViewport
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -36,7 +40,12 @@ internal class MapController(
     private val onStyleError: (Boolean) -> Unit
 ) {
     private var disposed = false
-    private val markerData = MapMarkerData()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var markerJson = EMPTY_CITY_GEOJSON
+    private val markerUpdates = MapMarkerUpdates(scope) { json ->
+        markerJson = json
+        map.style?.getSourceAs<GeoJsonSource>(CITIES_SOURCE)?.setGeoJson(json)
+    }
     private val idleListener = MapLibreMap.OnCameraIdleListener { publishViewport() }
 
     init {
@@ -60,10 +69,10 @@ internal class MapController(
                 MarkerBubbleShape.stretchesY,
                 MarkerBubbleShape.content
             )
-            style.addSource(GeoJsonSource(CITIES_SOURCE, markerData.features))
+            style.addSource(GeoJsonSource(CITIES_SOURCE, markerJson))
             style.addLayer(
                 SymbolLayer(CITIES_LAYER, CITIES_SOURCE).withProperties(
-                    symbolSortKey(get(POPULATION_RANK)),
+                    symbolSortKey(get(POPULATION_PRIORITY)),
                     iconAllowOverlap(false),
                     textAllowOverlap(false),
                     iconImage(BUBBLE_IMAGE),
@@ -87,8 +96,7 @@ internal class MapController(
 
     fun update(cities: List<MapCityUi>) {
         if (disposed) return
-        val features = markerData.update(cities) ?: return
-        map.style?.getSourceAs<GeoJsonSource>(CITIES_SOURCE)?.setGeoJson(features)
+        markerUpdates.submit(cities)
     }
 
     fun zoom(increase: Boolean) {
@@ -97,6 +105,7 @@ internal class MapController(
 
     fun dispose() {
         disposed = true
+        scope.cancel()
         map.removeOnCameraIdleListener(idleListener)
     }
 
