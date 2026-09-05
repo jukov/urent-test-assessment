@@ -45,14 +45,24 @@ internal class MapMarkerData {
     }
 }
 
+// State order is least to most recently returned by the API; each refreshed ID
+// becomes recent, so eviction is independent of population-based rendering order.
 internal fun mergeMapCities(cached: List<MapCityUi>, loaded: List<MapCityUi>): List<MapCityUi> {
     val cities = cached.associateByTo(linkedMapOf(), MapCityUi::id)
-    // Preserve state order on overlapping responses. Placement priority is assigned
-    // separately from population, so cache insertion order cannot hide larger cities.
-    loaded.forEach { cities[it.id] = it }
+    loaded.forEach { city ->
+        cities.remove(city.id)
+        cities[city.id] = city
+    }
+    val oldest = cities.entries.iterator()
+    while (cities.size > MAP_CITY_CACHE_CAPACITY) {
+        oldest.next()
+        oldest.remove()
+    }
     val merged = cities.values.toList()
     return if (merged == cached) cached else merged
 }
+
+internal const val MAP_CITY_CACHE_CAPACITY = 1_000
 
 internal const val EMPTY_CITY_GEOJSON = "{\"type\":\"FeatureCollection\",\"features\":[]}"
 internal const val POPULATION_PRIORITY = "populationPriority"

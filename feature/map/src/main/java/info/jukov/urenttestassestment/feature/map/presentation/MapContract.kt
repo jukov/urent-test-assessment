@@ -11,7 +11,7 @@ public data class MapCityUi(
 public enum class MapLoadState { Loading, Content, Empty, Error }
 
 public data class MapState(
-    // Cities accumulated during this screen lifetime; loadState describes the latest viewport request.
+    // Up to 1000 cities in LRU order; loadState describes the latest viewport request.
     val cities: List<MapCityUi> = emptyList(),
     val loadState: MapLoadState = MapLoadState.Loading
 )

@@ -62,13 +62,7 @@ internal class MapController(
         onStyleError(false)
         map.setStyle(Style.Builder().fromUri(STYLE_URL)) { style ->
             if (disposed) return@setStyle
-            style.addImage(
-                BUBBLE_IMAGE,
-                markerBubble(),
-                MarkerBubbleShape.stretchesX,
-                MarkerBubbleShape.stretchesY,
-                MarkerBubbleShape.content
-            )
+            style.addMarkerBubble()
             style.addSource(GeoJsonSource(CITIES_SOURCE, markerJson))
             style.addLayer(
                 SymbolLayer(CITIES_LAYER, CITIES_SOURCE).withProperties(
@@ -122,6 +116,22 @@ internal class MapController(
                     .map { (it ?: return).toCoordinate() }
             )
         )
+    }
+}
+
+private fun Style.addMarkerBubble() {
+    val bitmap = markerBubble()
+    try {
+        // Synchronous addImage copies pixel data; the temporary bitmap is no longer needed.
+        addImage(
+            BUBBLE_IMAGE,
+            bitmap,
+            MarkerBubbleShape.stretchesX,
+            MarkerBubbleShape.stretchesY,
+            MarkerBubbleShape.content
+        )
+    } finally {
+        bitmap.recycle()
     }
 }
 

@@ -51,14 +51,15 @@ internal fun CityNavigation(
 ) {
     val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
-    val isMap = entry?.destination?.hasRoute<CityMapDestination>() == true
+    val selectedTab = CityTab.entries.firstOrNull { tab ->
+        entry?.destination?.hasRoute(tab.destination::class) == true
+    } ?: CityTab.List
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            CityBottomBar(isMap) { selectMap ->
-                if (selectMap != isMap) {
-                    val destination: Any = if (selectMap) CityMapDestination else CityListDestination
-                    navController.navigate(destination) {
+            CityBottomBar(selectedTab) { tab ->
+                if (tab != selectedTab) {
+                    navController.navigate(tab.destination) {
                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
@@ -79,14 +80,14 @@ internal fun CityNavigation(
 }
 
 @Composable
-internal fun CityBottomBar(isMap: Boolean, onSelectMap: (Boolean) -> Unit) {
+internal fun CityBottomBar(selectedTab: CityTab, onSelect: (CityTab) -> Unit) {
     Surface(shadowElevation = 4.dp) {
         Row(Modifier.fillMaxWidth().navigationBarsPadding().height(64.dp).selectableGroup()) {
-            listOf(false, true).forEach { map ->
-                val selected = map == isMap
+            CityTab.entries.forEach { tab ->
+                val selected = tab == selectedTab
                 Box(
                     Modifier.weight(1f).height(64.dp)
-                        .selectable(selected, role = Role.Tab, onClick = { onSelectMap(map) }),
+                        .selectable(selected, role = Role.Tab, onClick = { onSelect(tab) }),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
@@ -97,8 +98,11 @@ internal fun CityBottomBar(isMap: Boolean, onSelectMap: (Boolean) -> Unit) {
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            if (map) URentIcons.Map else URentIcons.List,
-                            stringResource(if (map) R.string.tab_map else R.string.tab_cities),
+                            when (tab) {
+                                CityTab.List -> URentIcons.List
+                                CityTab.Map -> URentIcons.Map
+                            },
+                            stringResource(tab.labelRes),
                             Modifier.size(24.dp),
                             tint = if (selected) {
                                 MaterialTheme.colorScheme.primary

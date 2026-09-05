@@ -28,11 +28,12 @@ public class MapViewModel(
     private var generation = 0
 
     public val camera: MapCamera
-        get() = MapCamera(
-            savedState["map_lat"] ?: MapCamera().latitude,
-            savedState["map_lng"] ?: MapCamera().longitude,
-            savedState["map_zoom"] ?: MapCamera().zoom
-        )
+        get() {
+            val latitude = savedState.get<Double>("map_lat") ?: return MapCamera()
+            val longitude = savedState.get<Double>("map_lng") ?: return MapCamera()
+            val zoom = savedState.get<Double>("map_zoom") ?: return MapCamera()
+            return MapCamera(latitude, longitude, zoom)
+        }
 
     public fun onCameraIdle(camera: MapCamera, viewport: MapViewport) {
         savedState["map_lat"] = camera.latitude

@@ -38,12 +38,12 @@ class MapMarkerDataTest {
     }
 
     @Test
-    fun `overlapping responses update by id without duplicates or reordering known cities`() {
+    fun `overlapping responses update by id and refresh recency without duplicates`() {
         val other = city.copy(id = 8)
         val updated = city.copy(name = "Updated")
         val merged = mergeMapCities(listOf(city, other), listOf(other, updated, city.copy(id = 9)))
 
-        assertEquals(listOf(updated, other, city.copy(id = 9)), merged)
+        assertEquals(listOf(other, updated, city.copy(id = 9)), merged)
     }
 
     @Test

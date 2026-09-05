@@ -143,7 +143,7 @@ class MapViewModelTest {
         assertEquals(listOf(1L, 2L), vm.container.stateFlow.value.cities.map(MapCityUi::id))
         returning.complete(success(1))
         advanceUntilIdle()
-        assertEquals(listOf(1L, 2L), vm.container.stateFlow.value.cities.map(MapCityUi::id))
+        assertEquals(listOf(2L, 1L), vm.container.stateFlow.value.cities.map(MapCityUi::id))
     }
 
     @Test
@@ -194,6 +194,19 @@ class MapViewModelTest {
         advanceUntilIdle()
         assertEquals(camera, MapViewModel(repo, saved, dispatcher).camera)
         assertEquals(setOf("map_lat", "map_lng", "map_zoom"), saved.keys())
+    }
+
+    @Test
+    fun `incomplete saved camera falls back to one complete default camera`() {
+        val fields = listOf("map_lat" to 12.0, "map_lng" to 34.0, "map_zoom" to 5.0)
+        val repo = object : MapRepository {
+            override suspend fun cities(viewport: MapViewport) = MapResult.Success(emptyList())
+        }
+        // All seven incomplete combinations, including an empty SavedStateHandle.
+        for (mask in 0 until 7) {
+            val state = fields.filterIndexed { index, _ -> mask and (1 shl index) != 0 }.toMap()
+            assertEquals(MapCamera(), MapViewModel(repo, SavedStateHandle(state), dispatcher).camera)
+        }
     }
 
     private fun viewModel(load: suspend (MapViewport) -> MapResult) = MapViewModel(
