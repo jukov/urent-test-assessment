@@ -1,0 +1,8 @@
+<resources>
+    <string name="map_zoom_in">Приблизить</string>
+    <string name="map_zoom_out">Отдалить</string>
+    <string name="map_loading">Загружаем города…</string>
+    <string name="map_empty">В этой области нет городов</string>
+    <string name="map_error">Не удалось загрузить карту или города</string>
+    <string name="map_retry">Повторить</string>
+</resources>

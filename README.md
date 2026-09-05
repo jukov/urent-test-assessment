@@ -1,54 +1,38 @@
 # URent test assessment
 
-[Исходное задание](docs/TASK.md) · [Спецификация](docs/PROJECT_SPEC.md)
+Android-приложение для поиска городов и просмотра их на карте.
+[Исходное задание](docs/TASK.md) · [Спецификация проекта](docs/PROJECT_SPEC.md)
 
-## Окружение
+## Возможности
 
-JDK 25.
+- Список городов с поиском и пагинацией.
+- Переключение между списком и картой с сохранением состояния экранов.
+- Отображение городов в выбранной области карты и управление масштабом.
 
-## Convention plugins
+## Стек
 
-Общие настройки находятся в `build-logic`:
+Kotlin, Jetpack Compose, Orbit MVI, Koin, Ktor и AndroidX Navigation Compose.
+Проект разделён на `app`, общие модули `core` и функциональные модули `feature`.
+Общие настройки сборки и проверок вынесены в convention plugins в `build-logic`.
+Логирование построено на Timber и включено только в debug-сборках.
 
-- `urent.quality` подключает ktlint, Detekt и строгую конфигурацию Lint для Android-модулей.
-- `urent.testing` подключает JUnit 4, `kotlinx-coroutines-test`, `orbit-test`, Ktor `MockEngine`
-  и JSON content negotiation в `testImplementation`; настраивает JUnit и HTML/XML-отчёты.
+## Карта
 
-Подключение в Android-модуле после Android-плагина:
+Карта работает на MapLibre Native Android 13.4.1 с подложкой OpenFreeMap Liberty
+на основе данных OpenStreetMap. Регистрация и API-ключ не требуются.
+Города загружаются из API задания по координатам и радиусу видимой области.
 
-```kotlin
-plugins {
-    id("urent.quality")
-    id("urent.testing")
-}
+Для production-проекта предпочтительным вариантом считаем 2ГИС Mobile SDK.
+В тестовом задании выбран MapLibre, поскольку промышленное использование 2ГИС
+[требует подписки и ключа доступа](https://docs.2gis.com/android/sdk/start).
+
+## Сборка и проверки
+
+Нужны JDK 25 и Android SDK; путь к SDK задаётся через `ANDROID_HOME` или `local.properties`.
+
+```shell
+./gradlew assembleDebug
+./gradlew testDebugUnitTest lintDebug ktlintCheck detekt checkBuildLogic
 ```
 
-Оба плагина также поддерживают Kotlin JVM-модули. Задача `:<module>:test` добавляется
-в команду CI при подключении JVM-модуля.
-
-## Логирование
-
-Модуль `:core:logging` предоставляет единую точку входа `AppLogger` и Timber backend.
-`URentApplication` включает `DebugTree` только для debug-сборок; при инициализации release-сборки
-все Timber trees удаляются, поэтому сообщения, query-параметры и тела ответов не записываются.
-
-```kotlin
-AppLogger.withTag("Cities").debug("Loaded page %d", page)
-AppLogger.error(error, "Failed to load cities")
-```
-
-Feature- и network-код не должен импортировать Timber или `android.util.Log`. Прямой импорт
-`android.util.Log` дополнительно запрещён правилом Detekt. Подробное сетевое логирование следует
-включать только когда `Logging.isDetailedLoggingEnabled` равно `true`.
-
-## Отображение стран
-
-API возвращает двухбуквенный код страны. Экран городов форматирует его в активной системной
-локали, а неизвестный код показывает без изменений, чтобы не терять данные. Для кода `XK`,
-который фактически встречается в API, явно используются названия `Косово` и `Kosovo`.
-
-## GitHub Actions
-
-[Workflow](.github/workflows/ci.yml) запускается для pull request, push в `main` и вручную.
-Повторный запуск для той же ветки отменяет устаревший. Actions закреплены по SHA.
-PR могут читать Gradle cache; запись разрешена из `main`.
+[GitHub Actions](.github/workflows/ci.yml) выполняет проверки для PR и ветки `main`.
