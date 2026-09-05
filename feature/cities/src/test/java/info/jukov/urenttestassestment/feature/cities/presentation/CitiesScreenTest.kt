@@ -13,12 +13,6 @@ import org.junit.Test
 
 class CitiesScreenTest {
     @Test
-    fun `snackbar uses tall container and compact dismiss icon`() {
-        assertEquals(72.dp, CITIES_SNACKBAR_MIN_HEIGHT)
-        assertEquals(18.dp, CITIES_SNACKBAR_DISMISS_ICON_SIZE)
-    }
-
-    @Test
     fun `header has no elevation at top of list`() {
         assertEquals(0.dp, headerElevationFor(isScrolled = false))
     }

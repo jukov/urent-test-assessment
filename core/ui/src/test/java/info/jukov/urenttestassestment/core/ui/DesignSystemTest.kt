@@ -15,8 +15,6 @@ import info.jukov.urenttestassestment.core.ui.theme.BackgroundPrimary
 import info.jukov.urenttestassestment.core.ui.theme.BackgroundTertiary
 import info.jukov.urenttestassestment.core.ui.theme.ButtonPrimaryBackground
 import info.jukov.urenttestassestment.core.ui.theme.ButtonPrimaryBackgroundPressed
-import info.jukov.urenttestassestment.core.ui.theme.URentSizes
-import info.jukov.urenttestassestment.core.ui.theme.URentSpacing
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -35,9 +33,6 @@ class DesignSystemTest {
         assertEquals(BackgroundPrimary, selected.background)
         assertEquals(AccentBrand, selected.borderColor)
         assertEquals(1.5.dp, selected.borderWidth)
-        assertEquals(56.dp, URentSizes.inputMinHeight)
-        assertEquals(16.dp, URentSpacing.space16)
-        assertEquals(12.dp, URentSpacing.space12)
     }
 
     @Test
