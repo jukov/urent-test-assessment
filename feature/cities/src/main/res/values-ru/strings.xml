@@ -1,0 +1,9 @@
+<resources>
+    <string name="cities_title">Список городов</string>
+    <string name="cities_search_hint">Введите название города</string>
+    <string name="cities_search_description">Поиск</string>
+    <string name="cities_empty">Города не найдены</string>
+    <string name="cities_error_network">Проверьте подключение к интернету и попробуйте снова</string>
+    <string name="cities_error_generic">Не удалось загрузить города</string>
+    <string name="cities_retry">Повторить</string>
+</resources>
