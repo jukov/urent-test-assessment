@@ -31,7 +31,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -71,36 +70,41 @@ public fun CitiesScreen(
     LaunchedEffect(state.content) {
         if (state.content is CitiesContentState.EmptyProgress) listState.scrollToItem(0)
     }
-    Column(
+    CitiesPullToRefresh(
+        state = state.content,
+        onRefresh = onRefresh,
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        CitiesHeader(
-            query = state.query,
-            elevation = headerElevation,
-            onQueryChanged = onQueryChanged
-        )
-        when (val content = state.content) {
-            CitiesContentState.EmptyProgress -> CitiesSkeleton()
-
-            is CitiesContentState.Empty -> MessageState(stringResource(R.string.cities_empty), null)
-
-            is CitiesContentState.EmptyFailure -> MessageState(errorText(content.message), onRetry)
-
-            is CitiesContentState.Content,
-            is CitiesContentState.ContentProgress,
-            is CitiesContentState.ContentFailure,
-            is CitiesContentState.ContentRefreshing,
-            is CitiesContentState.ContentEndReached -> CitiesList(
-                content,
-                onLoadNextPage,
-                onRefresh,
-                onRetry,
-                onCityClick,
-                listState
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CitiesHeader(
+                query = state.query,
+                elevation = headerElevation,
+                onQueryChanged = onQueryChanged
             )
+            when (val content = state.content) {
+                CitiesContentState.EmptyProgress -> CitiesSkeleton()
+
+                is CitiesContentState.Empty -> MessageState(stringResource(R.string.cities_empty), null)
+
+                is CitiesContentState.EmptyFailure -> MessageState(errorText(content.message), onRetry)
+
+                is CitiesContentState.Content,
+                is CitiesContentState.ContentProgress,
+                is CitiesContentState.ContentFailure,
+                is CitiesContentState.ContentRefreshing,
+                is CitiesContentState.ContentEndReached -> CitiesList(
+                    content,
+                    onLoadNextPage,
+                    onRetry,
+                    onCityClick,
+                    listState
+                )
+            }
         }
     }
 }
@@ -109,7 +113,6 @@ public fun CitiesScreen(
 private fun CitiesList(
     content: CitiesContentState,
     onLoadNextPage: () -> Unit,
-    onRefresh: () -> Unit,
     onRetry: () -> Unit,
     onCityClick: (Long) -> Unit,
     listState: LazyListState
@@ -124,17 +127,7 @@ private fun CitiesList(
     LaunchedEffect(shouldLoadMore, content) {
         if (shouldLoadMore && content is CitiesContentState.Content) onLoadNextPage()
     }
-    if (content is CitiesContentState.ContentFailure) {
-        CitiesLazyList(content, cities, listState, onRetry, onCityClick)
-    } else {
-        PullToRefreshBox(
-            isRefreshing = content is CitiesContentState.ContentRefreshing,
-            onRefresh = onRefresh,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            CitiesLazyList(content, cities, listState, onRetry, onCityClick)
-        }
-    }
+    CitiesLazyList(content, cities, listState, onRetry, onCityClick)
 }
 
 @Composable
