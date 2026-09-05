@@ -35,7 +35,7 @@ internal object MarkerBubbleShape {
     val content = ImageContent(0f, 0f, WIDTH_PX.toFloat(), BODY_HEIGHT_PX.toFloat())
 }
 
-internal fun markerBubble(): Bitmap {
+internal fun markerBubble(backgroundColor: Int = MARKER_BACKGROUND_COLOR): Bitmap {
     val bitmap = createBitmap(MarkerBubbleShape.WIDTH_PX, MarkerBubbleShape.HEIGHT_PX).apply {
         // MapLibre derives the sprite pixel ratio from bitmap density, not screen density.
         density = MarkerBubbleShape.DENSITY_DPI
@@ -48,7 +48,7 @@ internal fun markerBubble(): Bitmap {
         op(markerPointer(inset), Path.Op.UNION)
     }
     val canvas = Canvas(bitmap)
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = MARKER_BACKGROUND_COLOR }
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = backgroundColor }
     canvas.drawPath(outline, paint)
     paint.style = Paint.Style.STROKE
     paint.strokeWidth = MarkerBubbleShape.BORDER_WIDTH_PX

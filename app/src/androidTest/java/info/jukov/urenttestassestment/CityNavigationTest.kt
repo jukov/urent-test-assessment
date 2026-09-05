@@ -1,5 +1,6 @@
 package info.jukov.urenttestassestment
 
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.getValue
@@ -14,12 +15,16 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
+import info.jukov.urenttestassestment.core.ui.R as UiR
+import info.jukov.urenttestassestment.core.ui.city.CityDetails
 import info.jukov.urenttestassestment.core.ui.theme.URentTheme
 import org.junit.Rule
 import org.junit.Test
@@ -84,6 +89,32 @@ class CityNavigationTest {
             isSelectable() and hasAnyDescendant(hasContentDescription(context.getString(R.string.tab_cities))),
             useUnmergedTree = true
         )[0].performClick().assertIsSelected()
+        compose.onNodeWithTag("query").assertTextContains("Moscow")
+    }
+
+    @Test
+    fun listOpensDetailsWithSavedDataAndBackRestoresInput() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent {
+            URentTheme {
+                CityNavigation(listContent = { open ->
+                    androidx.compose.foundation.layout.Column {
+                        var query by rememberSaveable { mutableStateOf("") }
+                        TextField(query, { query = it }, Modifier.testTag("query"))
+                        Button({ open(CityDetails(7, "Moscow & York", "RU", 12_655_000)) }) { Text("Open city") }
+                    }
+                })
+            }
+        }
+        compose.onNodeWithTag("query").performTextInput("Moscow")
+        compose.onNodeWithText("Open city").performClick()
+        compose.onNodeWithText("Moscow & York").assertIsDisplayed()
+        compose.onNodeWithText(context.getString(UiR.string.city_search)).assertIsDisplayed()
+        compose.onNodeWithContentDescription(context.getString(R.string.tab_map)).assertDoesNotExist()
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithText("Moscow & York").assertIsDisplayed()
+        compose.onNodeWithContentDescription(context.getString(UiR.string.city_back)).performClick()
         compose.onNodeWithTag("query").assertTextContains("Moscow")
     }
 }

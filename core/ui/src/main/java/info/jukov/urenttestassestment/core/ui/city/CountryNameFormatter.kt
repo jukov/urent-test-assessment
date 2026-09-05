@@ -1,4 +1,4 @@
-package info.jukov.urenttestassestment.feature.cities.presentation
+package info.jukov.urenttestassestment.core.ui.city
 
 import java.util.Locale
 

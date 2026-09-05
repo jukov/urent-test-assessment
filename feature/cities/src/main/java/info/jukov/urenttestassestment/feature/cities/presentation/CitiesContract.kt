@@ -1,5 +1,6 @@
 package info.jukov.urenttestassestment.feature.cities.presentation
 
+import info.jukov.urenttestassestment.core.ui.city.CityDetails
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesError
 
 public data class CityUi(val id: Long, val title: String)
@@ -21,6 +22,6 @@ public sealed interface CitiesContentState {
 }
 
 public sealed interface CitiesSideEffect {
-    public data class OpenCity(val cityId: Long) : CitiesSideEffect
+    public data class OpenCity(val city: CityDetails) : CitiesSideEffect
     public data class ShowRefreshFailure(val error: CitiesError) : CitiesSideEffect
 }

@@ -3,6 +3,8 @@ package info.jukov.urenttestassestment.feature.cities.presentation
 import androidx.lifecycle.SavedStateHandle
 import info.jukov.urenttestassestment.core.model.City
 import info.jukov.urenttestassestment.core.pagination.Page
+import info.jukov.urenttestassestment.core.ui.city.CityDetails
+import info.jukov.urenttestassestment.core.ui.city.CountryNameFormatter
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesError
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesRepository
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesResult
@@ -362,10 +364,12 @@ class CitiesViewModelTest {
 
     @Test
     fun `city click emits navigation side effect through Orbit`() = runTest(dispatcher) {
-        val pending = CompletableDeferred<CitiesResult<Page<City>>>()
-        viewModel(DeferredRepository(pending)).test(this) {
+        val selected = city(7, "Москва", "RU").copy(population = 12_655_000)
+        val vm = viewModel(FakeRepository(mutableListOf(success(selected, total = 1))))
+        advanceUntilIdle()
+        vm.test(this) {
             containerHost.onCityClick(7)
-            expectSideEffect(CitiesSideEffect.OpenCity(7))
+            expectSideEffect(CitiesSideEffect.OpenCity(CityDetails(7, "Москва", "RU", 12_655_000)))
             cancelAndIgnoreRemainingItems()
         }
     }

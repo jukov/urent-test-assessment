@@ -5,4 +5,5 @@
     <string name="map_empty">No cities in this area</string>
     <string name="map_error">Could not load the map or cities</string>
     <string name="map_retry">Retry</string>
+    <string name="map_dismiss_city">Close city details</string>
 </resources>
