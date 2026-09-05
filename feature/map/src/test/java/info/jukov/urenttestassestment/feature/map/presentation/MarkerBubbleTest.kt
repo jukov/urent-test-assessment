@@ -53,7 +53,10 @@ class MarkerBubbleTest {
     @Test
     fun `short and long labels preserve corners and a centered fixed width pointer`() {
         val ratio = MarkerBubbleShape.PIXEL_RATIO
-        listOf(40f, 44f, 100f, 180f).forEach { widthDp ->
+        listOf(0f, 3f, 12f, 44f, 88f, 160f).forEach { textWidth ->
+            // Native clamps icon quads to the fixed stretch content minimum.
+            val widthDp = (textWidth + MarkerLabelLayout.padding[1] + MarkerLabelLayout.padding[3])
+                .coerceAtLeast(40f)
             val widthPx = widthDp * ratio
             fun mapped(x: Float) = stretchedCoordinate(
                 x,
@@ -71,18 +74,14 @@ class MarkerBubbleTest {
     }
 
     @Test
-    fun `shortest label has enough room for fixed corners and pointer`() {
+    fun `single line body fits fixed corners without vertical clamping moving the tip`() {
         val ratio = MarkerBubbleShape.PIXEL_RATIO
-        val fixedWidth = MarkerBubbleShape.WIDTH_PX - MarkerBubbleShape.stretchesX.sumOf {
-            (it.second - it.first).toDouble()
-        }.toFloat()
         val fixedHeight = MarkerBubbleShape.BODY_HEIGHT_PX - MarkerBubbleShape.stretchesY.sumOf {
             (it.second - it.first).toDouble()
         }.toFloat()
-        val minimumWidth = MarkerLabelLayout.padding[1] + MarkerLabelLayout.padding[3]
-        val minimumHeight = MarkerLabelLayout.TEXT_SIZE + MarkerLabelLayout.padding[0] + MarkerLabelLayout.padding[2]
+        val minimumHeight = MarkerLabelLayout.LINE_HEIGHT + MarkerLabelLayout.padding[0] + MarkerLabelLayout.padding[2]
 
-        assertTrue(minimumWidth * ratio >= fixedWidth)
+        assertEquals(32f, minimumHeight, 0f)
         assertTrue(minimumHeight * ratio >= fixedHeight)
     }
 
@@ -92,7 +91,8 @@ class MarkerBubbleTest {
         assertEquals(MarkerBubbleShape.BODY_HEIGHT_PX.toFloat(), body[3], 0f)
         assertEquals("bottom", MarkerLabelLayout.TEXT_ANCHOR)
         val ratio = MarkerBubbleShape.PIXEL_RATIO
-        listOf(12f, 28f, 44f).forEach { textHeight ->
+        listOf(1, 2, 3).forEach { lineCount ->
+            val textHeight = lineCount * MarkerLabelLayout.LINE_HEIGHT
             val textBottom = MarkerLabelLayout.textOffset[1] * MarkerLabelLayout.TEXT_SIZE
             val bodyTop = textBottom - textHeight - MarkerLabelLayout.padding[0]
             val bodyHeight = textHeight + MarkerLabelLayout.padding[0] + MarkerLabelLayout.padding[2]

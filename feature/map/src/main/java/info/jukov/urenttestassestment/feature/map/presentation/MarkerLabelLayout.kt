@@ -11,15 +11,21 @@ internal object MarkerLabelLayout {
     const val TEXT_JUSTIFY = Property.TEXT_JUSTIFY_CENTER
     const val TEXT_ANCHOR = Property.TEXT_ANCHOR_BOTTOM
 
-    // Reserve room for 16dp corners and the fixed pointer even on the shortest labels.
-    private const val VERTICAL_PADDING = 10f
-    private const val HORIZONTAL_PADDING = 20f
-    val padding = arrayOf(VERTICAL_PADDING, HORIZONTAL_PADDING, VERTICAL_PADDING, HORIZONTAL_PADDING)
+    // A single line fits in a 32dp body, the minimum height for 16dp corners.
+    // Roboto's visible capitals sit about 2dp above MapLibre's line-box center.
+    // Balance the visible text by giving the logical box more padding above it.
+    private const val TOP_PADDING = 9f
+    private const val BOTTOM_PADDING = 5f
+    private const val HORIZONTAL_PADDING = 10f
+
+    // MapLibre's stretch metadata keeps very short labels at the sprite's fixed
+    // minimum width (40dp), without adding that much padding to every city name.
+    val padding = arrayOf(TOP_PADDING, HORIZONTAL_PADDING, BOTTOM_PADDING, HORIZONTAL_PADDING)
 
     // icon-text-fit ignores icon-anchor. Anchor the text's bottom above the body padding
     // and the fixed pointer, so the pointer's outer tip lands on the GeoJSON coordinate.
     val textOffset = arrayOf(
         0f,
-        -(VERTICAL_PADDING + MarkerBubbleShape.POINTER_HEIGHT_PX / MarkerBubbleShape.PIXEL_RATIO) / TEXT_SIZE
+        -(BOTTOM_PADDING + MarkerBubbleShape.POINTER_HEIGHT_PX / MarkerBubbleShape.PIXEL_RATIO) / TEXT_SIZE
     )
 }
