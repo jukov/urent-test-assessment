@@ -4,13 +4,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import info.jukov.urenttestassestment.core.ui.R as UiR
@@ -54,7 +58,7 @@ class MapControlsTest {
         ).fetchSemanticsNode().boundsInRoot.top
         assertTrue(zoom.fetchSemanticsNode().boundsInRoot.top < originalTop)
         assertTrue(zoom.fetchSemanticsNode().boundsInRoot.bottom < detailsTop)
-        compose.onNodeWithContentDescription(context.getString(R.string.map_close_city)).performClick()
+        compose.onNodeWithTag("city_sheet_handle", useUnmergedTree = true).performTouchInput { click() }
         compose.onNodeWithText("Moscow").assertDoesNotExist()
         assertEquals(originalTop, zoom.fetchSemanticsNode().boundsInRoot.top)
     }
@@ -78,12 +82,13 @@ class MapControlsTest {
         val zoomOut = compose.onNodeWithContentDescription(
             context.getString(R.string.map_zoom_out)
         ).fetchSemanticsNode().boundsInRoot
-        val close = compose.onNodeWithContentDescription(
-            context.getString(R.string.map_close_city)
+        val handle = compose.onNodeWithTag(
+            "city_sheet_handle",
+            useUnmergedTree = true
         ).fetchSemanticsNode().boundsInRoot
         assertTrue(zoomIn.height >= minTouchHeight)
         assertTrue(zoomOut.height >= minTouchHeight)
-        assertTrue(zoomOut.bottom <= close.top)
+        assertTrue(zoomOut.bottom <= handle.top)
         compose.onNodeWithText(
             context.getString(UiR.string.city_search)
         ).performScrollTo().assertIsDisplayed().performClick()

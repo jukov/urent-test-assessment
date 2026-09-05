@@ -3,19 +3,24 @@ package info.jukov.urenttestassestment.feature.map.presentation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MapCityOverlay(
     selected: MapCityUi?,
@@ -23,26 +28,43 @@ internal fun MapCityOverlay(
     onDismiss: () -> Unit,
     onSearch: () -> Unit
 ) {
-    var sheetSize by remember { mutableStateOf(IntSize.Zero) }
-    val sheetHeight = with(LocalDensity.current) { sheetSize.height.toDp() }
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().padding(bottom = if (selected != null) sheetHeight else 0.dp)) {
-            MapZoomControls(
-                onZoom,
-                Modifier.align(Alignment.CenterEnd).padding(end = 12.dp)
-            )
-        }
-        if (selected != null) {
-            MapCitySheet(
-                selected,
-                onDismiss,
-                onSearch,
-                maxHeight = minOf(
-                    maxHeight * SHEET_HEIGHT_FRACTION,
-                    (maxHeight - MAP_ZOOM_CONTROLS_HEIGHT - 16.dp).coerceAtLeast(0.dp)
-                ),
-                modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged { sheetSize = it }
-            )
+    val presentation = rememberMapCitySheet(selected, onDismiss)
+    val sheetState = presentation.state
+    BoxWithConstraints(Modifier.fillMaxSize().clipToBounds()) {
+        val height = maxHeight
+        val sheetHeight = minOf(
+            height * SHEET_HEIGHT_FRACTION,
+            (height - MAP_ZOOM_CONTROLS_HEIGHT - 16.dp).coerceAtLeast(0.dp)
+        )
+        BottomSheetScaffold(
+            scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState),
+            containerColor = Color.Transparent,
+            sheetPeekHeight = 0.dp,
+            sheetContainerColor = MaterialTheme.colorScheme.surface,
+            sheetMaxWidth = Dp.Unspecified,
+            sheetShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            sheetShadowElevation = 4.dp,
+            sheetDragHandle = if (presentation.city == null) null else ({ MapCitySheetHandle() }),
+            sheetContent = {
+                presentation.city?.let { city ->
+                    MapCitySheet(city, onSearch, (sheetHeight - MAP_CITY_SHEET_HANDLE_HEIGHT).coerceAtLeast(0.dp))
+                }
+            }
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                MapZoomControls(
+                    onZoom,
+                    Modifier.align(Alignment.TopEnd).padding(end = 12.dp).offset {
+                        // Read during placement: the sheet's anchors are already measured, and zoom
+                        // follows the same offset during dragging and settling without a second animation.
+                        val mapHeight = if (sheetState.hasExpandedState) sheetState.requireOffset() else height.toPx()
+                        IntOffset(
+                            0,
+                            ((mapHeight.coerceIn(0f, height.toPx()) - MAP_ZOOM_CONTROLS_HEIGHT.toPx()) / 2).roundToInt()
+                        )
+                    }
+                )
+            }
         }
     }
 }

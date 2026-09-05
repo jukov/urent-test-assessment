@@ -5,5 +5,4 @@
     <string name="map_empty">В этой области нет городов</string>
     <string name="map_error">Не удалось загрузить карту или города</string>
     <string name="map_retry">Повторить</string>
-    <string name="map_close_city">Закрыть информацию о городе</string>
 </resources>
