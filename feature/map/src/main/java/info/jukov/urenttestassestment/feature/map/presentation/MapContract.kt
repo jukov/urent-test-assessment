@@ -1,6 +1,12 @@
 package info.jukov.urenttestassestment.feature.map.presentation
 
-public data class MapCityUi(val id: Long, val name: String, val latitude: Double, val longitude: Double)
+public data class MapCityUi(
+    val id: Long,
+    val name: String,
+    val latitude: Double,
+    val longitude: Double,
+    val population: Long
+)
 
 public enum class MapLoadState { Loading, Content, Empty, Error }
 

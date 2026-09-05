@@ -12,13 +12,17 @@ internal class MapMarkerData {
         private set
 
     fun update(cities: List<MapCityUi>): FeatureCollection? {
-        if (this.cities == cities) return null
-        this.cities = cities.toList()
+        val ranked = cities.sortedWith(compareByDescending<MapCityUi> { it.population }.thenBy { it.id })
+        if (this.cities == ranked) return null
+        this.cities = ranked
         features = FeatureCollection.fromFeatures(
-            cities.map { city ->
+            ranked.mapIndexed { rank, city ->
                 Feature.fromGeometry(Point.fromLngLat(city.longitude, city.latitude), null, city.id.toString()).apply {
                     addStringProperty("name", city.name)
                     addNumberProperty("id", city.id)
+                    // Lower symbol-sort-key wins collisions. Rank also gives equal
+                    // populations a stable tie-breaker independent of cache/load order.
+                    addNumberProperty(POPULATION_RANK, rank)
                 }
             }
         )
@@ -28,8 +32,10 @@ internal class MapMarkerData {
 
 internal fun mergeMapCities(cached: List<MapCityUi>, loaded: List<MapCityUi>): List<MapCityUi> {
     val cities = cached.associateByTo(linkedMapOf(), MapCityUi::id)
-    // Replacing a value preserves insertion order, avoiding label priority changes when
-    // overlapping viewport responses contain the same cities in a different order.
+    // Preserve state order on overlapping responses. Placement priority is assigned
+    // separately from population, so cache insertion order cannot hide larger cities.
     loaded.forEach { cities[it.id] = it }
     return cities.values.toList()
 }
+
+internal const val POPULATION_RANK = "populationRank"

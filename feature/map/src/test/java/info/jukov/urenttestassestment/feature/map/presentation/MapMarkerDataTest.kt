@@ -7,7 +7,7 @@ import org.junit.Test
 import org.maplibre.geojson.Point
 
 class MapMarkerDataTest {
-    private val city = MapCityUi(7, "Moscow", 55.75, 37.62)
+    private val city = MapCityUi(7, "Moscow", 55.75, 37.62, 10_381_222)
 
     @Test
     fun `loading recompositions and identical responses do not invalidate the map source`() {
@@ -49,6 +49,45 @@ class MapMarkerDataTest {
 
         assertNull(data.update(mergeMapCities(cached, cached.reversed())))
         assertNull(data.update(mergeMapCities(cached, emptyList())))
+        assertSame(snapshot, data.features)
+    }
+
+    @Test
+    fun `Moscow gets collision priority over Khimki regardless of which city was cached first`() {
+        val khimki = city.copy(id = 8, name = "Khimki", population = 239_967)
+        listOf(city to khimki, khimki to city).forEach { (cached, loaded) ->
+            val data = MapMarkerData()
+            data.update(listOf(cached))
+            val features = data.update(mergeMapCities(listOf(cached), listOf(loaded)))!!.features()!!
+
+            assertEquals(listOf("Moscow", "Khimki"), features.map { it.getStringProperty("name") })
+            // MapLibre places lower sort keys first when overlap is disabled.
+            assertEquals(listOf(0, 1), features.map { it.getNumberProperty(POPULATION_RANK).toInt() })
+        }
+    }
+
+    @Test
+    fun `fresh population changes recompute cached priorities while retaining stable ids`() {
+        val other = city.copy(id = 8, population = 100)
+        val data = MapMarkerData()
+        val cached = listOf(city, other)
+        data.update(cached)
+        val updated = other.copy(population = 20_000_000)
+        val features = data.update(mergeMapCities(cached, listOf(updated)))!!.features()!!
+
+        assertEquals(listOf("8", "7"), features.map { it.id() })
+        assertEquals(listOf(0, 1), features.map { it.getNumberProperty(POPULATION_RANK).toInt() })
+    }
+
+    @Test
+    fun `equal populations use stable id priority and reordered inputs do not invalidate source`() {
+        val cities = listOf(city.copy(id = 9), city, city.copy(id = 8))
+        val data = MapMarkerData()
+        val snapshot = data.update(cities)!!
+
+        assertEquals(listOf("7", "8", "9"), snapshot.features()!!.map { it.id() })
+        assertEquals(listOf(0, 1, 2), snapshot.features()!!.map { it.getNumberProperty(POPULATION_RANK).toInt() })
+        assertNull(data.update(cities.reversed()))
         assertSame(snapshot, data.features)
     }
 }

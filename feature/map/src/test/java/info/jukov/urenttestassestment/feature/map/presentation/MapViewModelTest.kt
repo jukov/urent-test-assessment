@@ -63,7 +63,7 @@ class MapViewModelTest {
     fun `content is published through Orbit`() = runTest(dispatcher) {
         viewModel { success(1) }.test(this) {
             containerHost.onCameraIdle(camera, viewport)
-            expectState { MapState(listOf(MapCityUi(1, "City 1", 55.75, 37.62)), MapLoadState.Content) }
+            expectState { MapState(listOf(MapCityUi(1, "City 1", 55.75, 37.62, 100)), MapLoadState.Content) }
         }
     }
 
@@ -155,7 +155,7 @@ class MapViewModelTest {
                 success(1)
             } else {
                 MapResult.Success(
-                    listOf(City(1, "Updated", "RU", 100, 56.0, 38.0))
+                    listOf(City(1, "Updated", "RU", 200, 56.0, 38.0))
                 )
             }
         }
@@ -164,7 +164,7 @@ class MapViewModelTest {
         vm.onCameraIdle(camera, viewport.copy(radius = 30000))
         advanceUntilIdle()
 
-        assertEquals(listOf(MapCityUi(1, "Updated", 56.0, 38.0)), vm.container.stateFlow.value.cities)
+        assertEquals(listOf(MapCityUi(1, "Updated", 56.0, 38.0, 200)), vm.container.stateFlow.value.cities)
     }
 
     @Test

@@ -10,9 +10,12 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression.get
 import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory.iconAllowOverlap
 import org.maplibre.android.style.layers.PropertyFactory.iconImage
 import org.maplibre.android.style.layers.PropertyFactory.iconTextFit
 import org.maplibre.android.style.layers.PropertyFactory.iconTextFitPadding
+import org.maplibre.android.style.layers.PropertyFactory.symbolSortKey
+import org.maplibre.android.style.layers.PropertyFactory.textAllowOverlap
 import org.maplibre.android.style.layers.PropertyFactory.textAnchor
 import org.maplibre.android.style.layers.PropertyFactory.textColor
 import org.maplibre.android.style.layers.PropertyFactory.textField
@@ -60,6 +63,9 @@ internal class MapController(
             style.addSource(GeoJsonSource(CITIES_SOURCE, markerData.features))
             style.addLayer(
                 SymbolLayer(CITIES_LAYER, CITIES_SOURCE).withProperties(
+                    symbolSortKey(get(POPULATION_RANK)),
+                    iconAllowOverlap(false),
+                    textAllowOverlap(false),
                     iconImage(BUBBLE_IMAGE),
                     iconTextFit(Property.ICON_TEXT_FIT_BOTH),
                     iconTextFitPadding(MarkerLabelLayout.padding),
