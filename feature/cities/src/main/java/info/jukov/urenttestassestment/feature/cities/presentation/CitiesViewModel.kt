@@ -61,6 +61,10 @@ public class CitiesViewModel(
 
     public fun refresh() {
         val query = inputQuery.trim()
+        if (query != appliedQuery) {
+            loadInitial(query)
+            return
+        }
         if (!pagination.startRefresh()) return
         debounceJob?.cancel()
         debounceJob = null
