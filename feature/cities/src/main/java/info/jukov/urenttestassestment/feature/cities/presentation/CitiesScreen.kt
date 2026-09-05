@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -125,33 +126,48 @@ private fun CitiesList(
     LaunchedEffect(shouldLoadMore, content) {
         if (shouldLoadMore && content is CitiesContentState.Content) onLoadNextPage()
     }
-    PullToRefreshBox(
-        isRefreshing = content is CitiesContentState.ContentRefreshing,
-        onRefresh = onRefresh,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            state = listState,
-            contentPadding = PaddingValues(bottom = 24.dp)
+    if (content is CitiesContentState.ContentFailure) {
+        CitiesLazyList(content, cities, listState, onRetry, onCityClick)
+    } else {
+        PullToRefreshBox(
+            isRefreshing = content is CitiesContentState.ContentRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize()
         ) {
-            items(cities, key = CityUi::id) { city ->
-                CityRow(city, onCityClick)
-                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-            }
-            item {
-                when (content) {
-                    is CitiesContentState.ContentProgress -> Box(
-                        Modifier.fillMaxWidth().padding(20.dp),
-                        Alignment.Center
-                    ) {
-                        CircularProgressIndicator(Modifier.size(24.dp))
-                    }
+            CitiesLazyList(content, cities, listState, onRetry, onCityClick)
+        }
+    }
+}
 
-                    is CitiesContentState.ContentFailure -> MessageState(errorText(content.message), onRetry)
-
-                    else -> Unit
+@Composable
+private fun CitiesLazyList(
+    content: CitiesContentState,
+    cities: List<CityUi>,
+    listState: LazyListState,
+    onRetry: () -> Unit,
+    onCityClick: (Long) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        state = listState,
+        contentPadding = PaddingValues(bottom = 24.dp)
+    ) {
+        items(cities, key = CityUi::id) { city ->
+            CityRow(city, onCityClick)
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+        }
+        item {
+            when (content) {
+                is CitiesContentState.ContentProgress -> Box(
+                    Modifier.fillMaxWidth().padding(20.dp),
+                    Alignment.Center
+                ) {
+                    CircularProgressIndicator(Modifier.size(24.dp))
                 }
+
+                is CitiesContentState.ContentFailure -> MessageState(errorText(content.message), onRetry)
+
+                else -> Unit
             }
         }
     }

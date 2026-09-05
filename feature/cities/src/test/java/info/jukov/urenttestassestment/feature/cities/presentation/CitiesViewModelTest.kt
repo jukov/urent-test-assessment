@@ -14,6 +14,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -29,10 +30,13 @@ import org.orbitmvi.orbit.test.test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CitiesViewModelTest {
-    private val dispatcher = StandardTestDispatcher()
+    private lateinit var dispatcher: TestDispatcher
 
     @Before
-    fun setUp() = Dispatchers.setMain(dispatcher)
+    fun setUp() {
+        dispatcher = StandardTestDispatcher()
+        Dispatchers.setMain(dispatcher)
+    }
 
     @After
     fun tearDown() = Dispatchers.resetMain()
@@ -66,7 +70,7 @@ class CitiesViewModelTest {
         advanceUntilIdle()
 
         assertEquals("Mos", repository.requests.last().query)
-        assertEquals(input, viewModel.container.stateFlow.value.query)
+        assertEquals(input, viewModel.container.stateFlow.first { it.query == input }.query)
     }
 
     @Test
@@ -176,6 +180,27 @@ class CitiesViewModelTest {
         }.content as CitiesContentState.ContentEndReached
         assertEquals(listOf(1L, 2L), recovered.cities.map(CityUi::id))
         assertEquals(listOf(1, 2, 2), repository.requests.map(Request::page))
+    }
+
+    @Test
+    fun `refresh is ignored after pagination failure`() = runTest(dispatcher) {
+        val repository = FakeRepository(
+            mutableListOf(
+                success(city(1), total = 40),
+                CitiesResult.Failure(CitiesError.Network)
+            )
+        )
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+        viewModel.loadNextPage()
+        advanceUntilIdle()
+        val failed = viewModel.container.stateFlow.value.content
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertEquals(2, repository.requests.size)
+        assertEquals(failed, viewModel.container.stateFlow.value.content)
     }
 
     @Test
@@ -297,6 +322,9 @@ class CitiesViewModelTest {
         runCurrent()
 
         assertEquals(Request("Mos", 1, 20), repository.requests.last())
+        viewModel.container.stateFlow.first {
+            it.content is CitiesContentState.ContentRefreshing
+        }
         refresh.complete(success(city(2), total = 40))
         val content = viewModel.container.stateFlow.first {
             it.content is CitiesContentState.Content
