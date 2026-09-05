@@ -1,11 +1,6 @@
 package info.jukov.urenttestassestment.feature.map.presentation
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
-import androidx.core.graphics.createBitmap
 import info.jukov.urenttestassestment.feature.map.domain.Coordinate
 import info.jukov.urenttestassestment.feature.map.domain.MapViewport
 import org.maplibre.android.camera.CameraPosition
@@ -53,7 +48,13 @@ internal class MapController(
         onStyleError(false)
         map.setStyle(Style.Builder().fromUri(STYLE_URL)) { style ->
             if (disposed) return@setStyle
-            style.addImage(BUBBLE_IMAGE, markerBubble())
+            style.addImage(
+                BUBBLE_IMAGE,
+                markerBubble(),
+                MarkerBubbleShape.stretches,
+                MarkerBubbleShape.stretches,
+                null
+            )
             style.addSource(GeoJsonSource(CITIES_SOURCE, features(cities)))
             style.addLayer(
                 SymbolLayer(CITIES_LAYER, CITIES_SOURCE).withProperties(
@@ -111,20 +112,6 @@ private fun features(cities: List<MapCityUi>) = FeatureCollection.fromFeatures(
         }
     }
 )
-
-// Pixel geometry of the shared marker asset; scaled by MapLibre to fit the label.
-@Suppress("MagicNumber")
-private fun markerBubble(): Bitmap {
-    val bitmap = createBitmap(100, 48)
-    val canvas = Canvas(bitmap)
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(78, 73, 91) }
-    canvas.drawRoundRect(RectF(1f, 1f, 99f, 47f), 24f, 24f, paint)
-    paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 2f
-    paint.color = Color.WHITE
-    canvas.drawRoundRect(RectF(1f, 1f, 99f, 47f), 24f, 24f, paint)
-    return bitmap
-}
 
 private const val STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
 private const val CITIES_SOURCE = "urent-cities"
