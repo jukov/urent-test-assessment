@@ -2,50 +2,56 @@ package info.jukov.urenttestassestment.testing
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
-import org.junit.Rule
+import org.junit.Assert.assertThrows
 import org.junit.Test
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainDispatcherRuleTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
-
     @Test
-    fun `main dispatcher uses the runTest virtual clock`() = runTest {
-        assertSame(mainDispatcherRule.dispatcher.scheduler, testScheduler)
-        var completed = false
-        launch(Dispatchers.Main) {
-            delay(300)
-            completed = true
-        }
+    fun `rule installs the supplied dispatcher and resets it after success`() {
+        val dispatcher = StandardTestDispatcher()
+        val rule = MainDispatcherRule(dispatcher)
 
-        advanceTimeBy(300)
-        assertFalse(completed)
-        runCurrent()
-        assertTrue(completed)
+        try {
+            rule.evaluate {
+                runTest { assertSame(dispatcher.scheduler, testScheduler) }
+            }
+            assertNotSame(dispatcher.scheduler, StandardTestDispatcher().scheduler)
+        } finally {
+            Dispatchers.resetMain()
+        }
     }
 
     @Test
-    fun `cancelled main dispatcher work cannot complete after advancing time`() = runTest {
-        var completed = false
-        val job = launch(Dispatchers.Main) {
-            delay(300)
-            completed = true
-        }
-        runCurrent()
-        job.cancel()
+    fun `rule resets its dispatcher and preserves the failure when a test throws`() {
+        val rule = MainDispatcherRule()
+        val failure = AssertionError("Test failure")
 
-        advanceTimeBy(300)
-        runCurrent()
-        assertFalse(completed)
-        assertTrue(job.isCancelled)
+        try {
+            val actual = assertThrows(AssertionError::class.java) {
+                rule.evaluate {
+                    runTest { assertSame(rule.dispatcher.scheduler, testScheduler) }
+                    throw failure
+                }
+            }
+            assertSame(failure, actual)
+            assertNotSame(rule.dispatcher.scheduler, StandardTestDispatcher().scheduler)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    private fun MainDispatcherRule.evaluate(action: () -> Unit) {
+        val statement = object : Statement() {
+            override fun evaluate() = action()
+        }
+        apply(statement, Description.EMPTY).evaluate()
     }
 }
