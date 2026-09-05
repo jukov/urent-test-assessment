@@ -53,6 +53,9 @@ import info.jukov.urenttestassestment.feature.map.presentation.MapRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
+internal data object CityTabsDestination
+
+@Serializable
 internal data object CityListDestination
 
 @Serializable
@@ -72,22 +75,52 @@ internal fun CityNavigation(
     mapContent: @Composable () -> Unit = { MapRoute() }
 ) {
     val navController = rememberNavController()
+    NavHost(
+        navController,
+        startDestination = CityTabsDestination,
+        enterTransition = { cityEnterTransition() },
+        exitTransition = { cityExitTransition() },
+        popEnterTransition = { cityEnterTransition() },
+        popExitTransition = { cityExitTransition() },
+        predictivePopEnterTransition = { cityEnterTransition() },
+        predictivePopExitTransition = { cityExitTransition() }
+    ) {
+        composable<CityTabsDestination> {
+            CityTabs(listContent, mapContent) { city ->
+                navController.navigate(
+                    CityDetailsDestination(city.id, city.name, city.countryCode, city.population)
+                )
+            }
+        }
+        composable<CityDetailsDestination> { detailsEntry ->
+            val city = detailsEntry.toRoute<CityDetailsDestination>()
+            CityDetailsRoute(CityDetails(city.id, city.name, city.countryCode, city.population)) {
+                navController.popBackStack()
+            }
+        }
+    }
+}
+
+@Composable
+private fun CityTabs(
+    listContent: @Composable ((CityDetails) -> Unit) -> Unit,
+    mapContent: @Composable () -> Unit,
+    onOpenCity: (CityDetails) -> Unit
+) {
+    val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
     val selectedTab = CityTab.entries.firstOrNull { tab ->
         entry?.destination?.hasRoute(tab.destination::class) == true
     } ?: CityTab.List
-    val showingDetails = entry?.destination?.hasRoute<CityDetailsDestination>() == true
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            if (!showingDetails) {
-                CityBottomBar(selectedTab) { tab ->
-                    if (tab != selectedTab) {
-                        navController.navigate(tab.destination) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+            CityBottomBar(selectedTab) { tab ->
+                if (tab != selectedTab) {
+                    navController.navigate(tab.destination) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
                     }
                 }
             }
@@ -97,26 +130,14 @@ internal fun CityNavigation(
             navController,
             startDestination = CityListDestination,
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
-            enterTransition = { cityEnterTransition() },
-            exitTransition = { cityExitTransition() },
-            popEnterTransition = { cityEnterTransition() },
-            popExitTransition = { cityExitTransition() },
-            predictivePopEnterTransition = { cityEnterTransition() },
-            predictivePopExitTransition = { cityExitTransition() }
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None },
+            predictivePopEnterTransition = { EnterTransition.None },
+            predictivePopExitTransition = { ExitTransition.None }
         ) {
-            composable<CityListDestination> {
-                listContent { city ->
-                    navController.navigate(
-                        CityDetailsDestination(city.id, city.name, city.countryCode, city.population)
-                    )
-                }
-            }
-            composable<CityDetailsDestination> { detailsEntry ->
-                val city = detailsEntry.toRoute<CityDetailsDestination>()
-                CityDetailsRoute(CityDetails(city.id, city.name, city.countryCode, city.population)) {
-                    navController.popBackStack()
-                }
-            }
+            composable<CityListDestination> { listContent(onOpenCity) }
             composable<CityMapDestination> { mapContent() }
         }
     }

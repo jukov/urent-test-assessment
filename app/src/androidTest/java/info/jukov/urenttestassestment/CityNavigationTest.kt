@@ -26,6 +26,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import info.jukov.urenttestassestment.core.ui.R as UiR
 import info.jukov.urenttestassestment.core.ui.city.CityDetails
 import info.jukov.urenttestassestment.core.ui.theme.URentTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -90,6 +91,35 @@ class CityNavigationTest {
             useUnmergedTree = true
         )[0].performClick().assertIsSelected()
         compose.onNodeWithTag("query").assertTextContains("Moscow")
+    }
+
+    @Test
+    fun detailsButtonStaysInPlaceWhileReturningToTabs() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        compose.setContent {
+            URentTheme {
+                CityNavigation(listContent = { open ->
+                    Button({ open(CityDetails(7, "Moscow", "RU", 12_655_000)) }) { Text("Open city") }
+                })
+            }
+        }
+        compose.onNodeWithText("Open city").performClick()
+        val search = compose.onNodeWithText(context.getString(UiR.string.city_search))
+        search.assertIsDisplayed()
+        val originalBounds = search.fetchSemanticsNode().boundsInRoot
+        compose.mainClock.autoAdvance = false
+
+        compose.onNodeWithContentDescription(context.getString(UiR.string.city_back)).performClick()
+        repeat(3) {
+            compose.mainClock.advanceTimeBy(48)
+            compose.onNodeWithContentDescription(context.getString(R.string.tab_map)).assertExists()
+            assertEquals(originalBounds, search.fetchSemanticsNode().boundsInRoot)
+        }
+
+        compose.mainClock.autoAdvance = true
+        search.assertDoesNotExist()
+        compose.onNodeWithText("Open city").assertIsDisplayed()
+        compose.onNodeWithContentDescription(context.getString(R.string.tab_map)).assertIsDisplayed()
     }
 
     @Test
