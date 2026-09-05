@@ -41,12 +41,6 @@ Feature- и network-код не должен импортировать Timber �
 `android.util.Log` дополнительно запрещён правилом Detekt. Подробное сетевое логирование следует
 включать только когда `Logging.isDetailedLoggingEnabled` равно `true`.
 
-## Сеть
-
-`:core:network` создаёт Ktor Client с OkHttp engine. Это исключает путь через системный
-`HttpURLConnection`, на котором наблюдалось падение `Unbalanced enter/exit` при отмене
-чтения ответа. Отмена корутин продолжает распространяться вызывающему коду.
-
 ## GitHub Actions
 
 [Workflow](.github/workflows/ci.yml) запускается для pull request, push в `main` и вручную.
