@@ -11,10 +11,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -26,10 +29,12 @@ internal fun MapCityOverlay(
     selected: MapCityUi?,
     onZoom: (Boolean) -> Unit,
     onDismiss: () -> Unit,
-    onSearch: () -> Unit
+    onSearch: () -> Unit,
+    onSheetMeasured: (Long, Int) -> Unit = { _, _ -> }
 ) {
     val presentation = rememberMapCitySheet(selected, onDismiss)
     val sheetState = presentation.state
+    val handleHeightPx = with(LocalDensity.current) { MAP_CITY_SHEET_HANDLE_HEIGHT.roundToPx() }
     BoxWithConstraints(Modifier.fillMaxSize().clipToBounds()) {
         val height = maxHeight
         val sheetHeight = minOf(
@@ -47,7 +52,14 @@ internal fun MapCityOverlay(
             sheetDragHandle = if (presentation.city == null) null else ({ MapCitySheetHandle() }),
             sheetContent = {
                 presentation.city?.let { city ->
-                    MapCitySheet(city, onSearch, (sheetHeight - MAP_CITY_SHEET_HANDLE_HEIGHT).coerceAtLeast(0.dp))
+                    key(city.id) {
+                        MapCitySheet(
+                            city,
+                            onSearch,
+                            (sheetHeight - MAP_CITY_SHEET_HANDLE_HEIGHT).coerceAtLeast(0.dp),
+                            Modifier.onSizeChanged { onSheetMeasured(city.id, it.height + handleHeightPx) }
+                        )
+                    }
                 }
             }
         ) {

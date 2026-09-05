@@ -108,4 +108,23 @@ class MapSheetGestureTest {
             .performSemanticsAction(SemanticsActions.Dismiss)
         compose.onNodeWithText("Moscow").assertDoesNotExist()
     }
+
+    @Test
+    fun sheetMeasurementIsReportedForEachSelectedCityEvenWhenHeightMatches() {
+        val selected = mutableStateOf<MapCityUi?>(city)
+        val measurements = mutableMapOf<Long, Int>()
+        compose.setContent {
+            URentTheme {
+                MapCityOverlay(selected.value, {
+                }, {}, {}, onSheetMeasured = { id, height -> measurements[id] = height })
+            }
+        }
+        compose.waitForIdle()
+        compose.runOnIdle {
+            assertTrue(requireNotNull(measurements[1]) > 0)
+            selected.value = city.copy(id = 2, name = "Paris")
+        }
+        compose.waitForIdle()
+        compose.runOnIdle { assertEquals(measurements[1], measurements[2]) }
+    }
 }

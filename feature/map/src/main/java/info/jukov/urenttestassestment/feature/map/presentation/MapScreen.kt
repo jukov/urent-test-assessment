@@ -18,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,7 +45,15 @@ internal fun MapScreen(
 ) {
     var controller by remember { mutableStateOf<MapController?>(null) }
     var styleError by remember { mutableStateOf(false) }
+    var sheetLayout by remember { mutableStateOf<Pair<Long, Int>?>(null) }
+    var selectionClick by remember { mutableStateOf(0L) }
     val selected = state.selectedCity
+    LaunchedEffect(controller, selected?.id, sheetLayout, selectionClick) {
+        controller?.cityCamera?.cancel()
+        if (selected != null && sheetLayout?.first == selected.id) {
+            controller?.cityCamera?.focus(selected, requireNotNull(sheetLayout).second)
+        }
+    }
     val markers = remember(state.cities, selected) {
         if (selected != null && state.cities.none { it.id == selected.id }) state.cities + selected else state.cities
     }
@@ -59,13 +68,17 @@ internal fun MapScreen(
             Modifier.fillMaxSize(),
             selectedCityId = selected?.id,
             selectedColor = MaterialTheme.colorScheme.primary.toArgb(),
-            onSelectCity = onSelectCity
+            onSelectCity = { id ->
+                if (id != null) selectionClick++
+                onSelectCity(id)
+            }
         )
         MapCityOverlay(
             selected,
             onZoom = { controller?.zoom(it) },
             onDismiss = { onSelectCity(null) },
-            onSearch = { selected?.let { onSearchCity(it.name) } }
+            onSearch = { selected?.let { onSearchCity(it.name) } },
+            onSheetMeasured = { id, height -> sheetLayout = id to height }
         )
         MapStatus(
             state = if (styleError) MapLoadState.Error else state.loadState,

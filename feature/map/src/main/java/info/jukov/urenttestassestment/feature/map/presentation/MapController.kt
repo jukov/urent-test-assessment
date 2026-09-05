@@ -44,6 +44,7 @@ internal class MapController(
     private val onSelectCity: (Long?) -> Unit,
     private val selectedColor: Int
 ) {
+    val cityCamera = MapCityCamera(map)
     private var disposed = false
     private var selectedCityId: Long? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -127,6 +128,7 @@ internal class MapController(
     }
 
     fun dispose() {
+        cityCamera.cancel()
         disposed = true
         scope.cancel()
         map.removeOnCameraIdleListener(idleListener)
