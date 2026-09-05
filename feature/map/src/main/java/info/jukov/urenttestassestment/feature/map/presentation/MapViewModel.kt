@@ -55,7 +55,10 @@ public class MapViewModel(private val repository: MapRepository, private val sav
                 reduce {
                     when (result) {
                         is MapResult.Success -> MapState(
-                            cities = result.cities.map { MapCityUi(it.id, it.name, it.latitude, it.longitude) },
+                            cities = mergeMapCities(
+                                state.cities,
+                                result.cities.map { MapCityUi(it.id, it.name, it.latitude, it.longitude) }
+                            ),
                             loadState = if (result.cities.isEmpty()) MapLoadState.Empty else MapLoadState.Content
                         )
 

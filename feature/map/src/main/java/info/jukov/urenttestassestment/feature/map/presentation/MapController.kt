@@ -22,9 +22,6 @@ import org.maplibre.android.style.layers.PropertyFactory.textOffset
 import org.maplibre.android.style.layers.PropertyFactory.textSize
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.geojson.Feature
-import org.maplibre.geojson.FeatureCollection
-import org.maplibre.geojson.Point
 
 internal class MapController(
     private val map: MapLibreMap,
@@ -33,7 +30,7 @@ internal class MapController(
     private val onStyleError: (Boolean) -> Unit
 ) {
     private var disposed = false
-    private var cities: List<MapCityUi> = emptyList()
+    private val markerData = MapMarkerData()
     private val idleListener = MapLibreMap.OnCameraIdleListener { publishViewport() }
 
     init {
@@ -57,7 +54,7 @@ internal class MapController(
                 MarkerBubbleShape.stretchesY,
                 MarkerBubbleShape.content
             )
-            style.addSource(GeoJsonSource(CITIES_SOURCE, features(cities)))
+            style.addSource(GeoJsonSource(CITIES_SOURCE, markerData.features))
             style.addLayer(
                 SymbolLayer(CITIES_LAYER, CITIES_SOURCE).withProperties(
                     iconImage(BUBBLE_IMAGE),
@@ -77,8 +74,9 @@ internal class MapController(
     }
 
     fun update(cities: List<MapCityUi>) {
-        this.cities = cities
-        map.style?.getSourceAs<GeoJsonSource>(CITIES_SOURCE)?.setGeoJson(features(cities))
+        if (disposed) return
+        val features = markerData.update(cities) ?: return
+        map.style?.getSourceAs<GeoJsonSource>(CITIES_SOURCE)?.setGeoJson(features)
     }
 
     fun zoom(increase: Boolean) {
@@ -107,15 +105,6 @@ internal class MapController(
 }
 
 private fun LatLng.toCoordinate() = Coordinate(latitude, longitude)
-
-private fun features(cities: List<MapCityUi>) = FeatureCollection.fromFeatures(
-    cities.map { city ->
-        Feature.fromGeometry(Point.fromLngLat(city.longitude, city.latitude)).apply {
-            addStringProperty("name", city.name)
-            addNumberProperty("id", city.id)
-        }
-    }
-)
 
 private const val STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
 private const val CITIES_SOURCE = "urent-cities"
