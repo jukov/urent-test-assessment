@@ -68,6 +68,27 @@ class CitiesViewModelTest {
     }
 
     @Test
+    fun `every raw query change restarts debounce`() = runTest(dispatcher) {
+        val repository = FakeRepository(mutableListOf(success(city(1), total = 1), success(city(2), total = 1)))
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.onQueryChanged("New ")
+        runCurrent()
+        advanceTimeBy(200)
+        viewModel.onQueryChanged("New  ")
+        runCurrent()
+        advanceTimeBy(299)
+        runCurrent()
+        assertEquals(1, repository.requests.size)
+
+        advanceTimeBy(1)
+        advanceUntilIdle()
+        assertEquals("New", repository.requests.last().query)
+        assertEquals(2, repository.requests.size)
+    }
+
+    @Test
     fun `returning to active query cancels pending search`() = runTest(dispatcher) {
         val repository = FakeRepository(mutableListOf(success(city(1), total = 1)))
         val viewModel = viewModel(repository)

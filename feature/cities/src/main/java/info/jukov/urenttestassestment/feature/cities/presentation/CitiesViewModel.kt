@@ -21,40 +21,38 @@ public class CitiesViewModel(
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel(),
     ContainerHost<CitiesState, CitiesSideEffect> {
+    private val initialQuery = savedStateHandle.get<String>(QUERY_KEY).orEmpty()
     override val container = container<CitiesState, CitiesSideEffect>(
-        CitiesState(query = savedStateHandle.get<String>(QUERY_KEY).orEmpty())
+        CitiesState(query = initialQuery)
     )
     private val pagination = PaginationStateMachine<City, Long>(City::id)
     private var debounceJob: Job? = null
     private var requestJob: Job? = null
     private var generation = 0
-    private var activeQuery: String? = null
-    private var latestQuery: String = savedStateHandle.get<String>(QUERY_KEY).orEmpty()
+    private var activeQuery: String = initialQuery.trim()
+    private var latestQuery: String = initialQuery
 
     init {
-        loadInitial(savedStateHandle.get<String>(QUERY_KEY).orEmpty().trim())
+        loadInitial(activeQuery)
     }
 
     public fun onQueryChanged(value: String) {
         latestQuery = value
         savedStateHandle[QUERY_KEY] = value
         intent { reduce { state.copy(query = value) } }
-        val normalized = value.trim()
         debounceJob?.cancel()
-        debounceJob = null
-        if (normalized == activeQuery) return
         debounceJob = viewModelScope.launch {
             delay(SEARCH_DEBOUNCE_MILLIS)
             debounceJob = null
-            loadInitial(normalized)
+            val normalized = value.trim()
+            if (normalized != activeQuery) loadInitial(normalized)
         }
     }
 
     public fun loadNextPage() {
-        val query = activeQuery ?: return
         if (!pagination.startAppend()) return
         publishState()
-        requestPage(query, pagination.nextPage, generation)
+        requestPage(activeQuery, pagination.nextPage, generation)
     }
 
     public fun refresh() {
@@ -71,7 +69,7 @@ public class CitiesViewModel(
 
     public fun retry() {
         when (container.stateFlow.value.content) {
-            is CitiesContentState.EmptyFailure -> loadInitial(container.stateFlow.value.query.trim())
+            is CitiesContentState.EmptyFailure -> loadInitial(latestQuery.trim())
             is CitiesContentState.ContentFailure -> loadNextPage()
             else -> Unit
         }
@@ -108,7 +106,7 @@ public class CitiesViewModel(
 
     private fun publishState() = intent {
         reduce {
-            state.copy(content = pagination.state.toUi(activeQuery.orEmpty(), countryFormatter))
+            state.copy(content = pagination.state.toUi(activeQuery, countryFormatter))
         }
     }
 

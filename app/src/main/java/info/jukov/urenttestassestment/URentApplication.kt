@@ -10,7 +10,15 @@ import org.koin.core.context.startKoin
 class URentApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        setupLogging()
+        setupDi()
+    }
+
+    private fun setupLogging() {
         Logging.initialize(isDebug = BuildConfig.DEBUG)
+    }
+
+    private fun setupDi() {
         startKoin {
             androidContext(this@URentApplication)
             modules(networkModule, citiesModule)

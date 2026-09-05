@@ -9,6 +9,12 @@ class PaginationStateMachineTest {
     private val machine = PaginationStateMachine<Item, Int>(Item::id)
 
     @Test
+    fun `starts on first page in empty progress`() {
+        assertEquals(PaginationState.EmptyProgress, machine.state)
+        assertEquals(1, machine.nextPage)
+    }
+
+    @Test
     fun `initial progress transitions to empty failure`() {
         val failure = IllegalStateException("failed")
         machine.fail(failure)
@@ -26,6 +32,22 @@ class PaginationStateMachineTest {
         machine.append(Page(listOf(Item(1), Item(2)), 1, 2, 4))
         assertTrue(machine.startAppend())
         assertEquals(PaginationState.ContentProgress(listOf(Item(1), Item(2))), machine.state)
+        assertFalse(machine.startAppend())
+    }
+
+    @Test
+    fun `append is rejected without loadable content`() {
+        assertFalse(machine.startAppend())
+        machine.append(Page(emptyList(), 1, 20, 0))
+        assertFalse(machine.startAppend())
+        machine.startInitial()
+        machine.fail(IllegalStateException("failed"))
+        assertFalse(machine.startAppend())
+    }
+
+    @Test
+    fun `append is rejected after reaching end`() {
+        machine.append(Page(listOf(Item(1)), 1, 20, 1))
         assertFalse(machine.startAppend())
     }
 
@@ -76,6 +98,42 @@ class PaginationStateMachineTest {
     }
 
     @Test
+    fun `refresh failure restores previous content failure`() {
+        val appendFailure = IllegalStateException("append failed")
+        val refreshFailure = IllegalStateException("refresh failed")
+        val items = listOf(Item(1), Item(2))
+        machine.append(Page(items, 1, 2, 4))
+        machine.startAppend()
+        machine.fail(appendFailure)
+
+        machine.startRefresh()
+        machine.fail(refreshFailure)
+
+        assertEquals(PaginationState.ContentFailure(items, appendFailure), machine.state)
+        assertEquals(2, machine.nextPage)
+    }
+
+    @Test
+    fun `refresh cancels append progress and restores stable content on failure`() {
+        val items = listOf(Item(1), Item(2))
+        machine.append(Page(items, 1, 2, 4))
+        machine.startAppend()
+
+        machine.startRefresh()
+        machine.fail(IllegalStateException("refresh failed"))
+
+        assertEquals(PaginationState.Content(items), machine.state)
+        assertEquals(2, machine.nextPage)
+    }
+
+    @Test
+    fun `second refresh is rejected while refresh is running`() {
+        machine.append(Page(listOf(Item(1), Item(2)), 1, 2, 4))
+        assertTrue(machine.startRefresh())
+        assertFalse(machine.startRefresh())
+    }
+
+    @Test
     fun `merges pages without duplicate ids and reaches end`() {
         machine.append(Page(listOf(Item(1), Item(2)), 1, 2, 4))
         machine.startAppend()
@@ -87,6 +145,52 @@ class PaginationStateMachineTest {
     fun `uses short page fallback when total is invalid`() {
         machine.append(Page(listOf(Item(1)), 1, 20, null))
         assertEquals(PaginationState.ContentEndReached(listOf(Item(1))), machine.state)
+    }
+
+    @Test
+    fun `full page without total keeps pagination available`() {
+        val items = listOf(Item(1), Item(2))
+        machine.append(Page(items, 1, 2, null))
+
+        assertEquals(PaginationState.Content(items), machine.state)
+        assertEquals(2, machine.nextPage)
+        assertTrue(machine.startAppend())
+    }
+
+    @Test
+    fun `empty appended page preserves content and reaches end`() {
+        val items = listOf(Item(1), Item(2))
+        machine.append(Page(items, 1, 2, 10))
+        machine.startAppend()
+        machine.append(Page(emptyList(), 2, 2, 10))
+
+        assertEquals(PaginationState.ContentEndReached(items), machine.state)
+        assertEquals(3, machine.nextPage)
+    }
+
+    @Test
+    fun `next page follows highest received page`() {
+        machine.append(Page(listOf(Item(1), Item(2)), 3, 2, 10))
+        assertEquals(4, machine.nextPage)
+    }
+
+    @Test
+    fun `start initial resets content and page counter`() {
+        machine.append(Page(listOf(Item(1), Item(2)), 3, 2, 10))
+        machine.startInitial()
+
+        assertEquals(PaginationState.EmptyProgress, machine.state)
+        assertEquals(1, machine.nextPage)
+    }
+
+    @Test
+    fun `failure outside progress states is ignored`() {
+        val items = listOf(Item(1), Item(2))
+        machine.append(Page(items, 1, 2, 4))
+        machine.fail(IllegalStateException("stale failure"))
+
+        assertEquals(PaginationState.Content(items), machine.state)
+        assertEquals(2, machine.nextPage)
     }
 
     private data class Item(val id: Int)
