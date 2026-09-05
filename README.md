@@ -1,7 +1,7 @@
 # URent test assessment
 
 Android-приложение для поиска городов и просмотра их на карте.
-[Исходное задание](docs/TASK.md) · [Спецификация проекта](docs/PROJECT_SPEC.md)
+[Исходное задание](docs/TASK.md) · [Спецификация проекта](docs/PROJECT_SPEC.md) · [Ручной чек-лист](docs/MANUAL_TEST_CASES.md)
 
 TODO: после публикации APK добавить ссылку на последний GitHub Release для скачивания приложения.
 
