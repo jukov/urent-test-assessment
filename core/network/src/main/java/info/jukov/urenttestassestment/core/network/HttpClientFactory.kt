@@ -3,8 +3,9 @@ package info.jukov.urenttestassestment.core.network
 import info.jukov.urenttestassestment.core.logging.AppLogger
 import info.jukov.urenttestassestment.core.logging.Logger
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.android.Android
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -16,7 +17,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 public fun createHttpClient(config: NetworkConfig = NetworkConfig(), debugLogging: Boolean = false): HttpClient =
-    createHttpClient(Android.create(), config, debugLogging)
+    HttpClient(OkHttp) { configureNetwork(config, debugLogging, AppLogger) }
 
 public fun createHttpClient(
     engine: HttpClientEngine,
@@ -30,6 +31,10 @@ internal fun createHttpClient(
     debugLogging: Boolean,
     logger: Logger
 ): HttpClient = HttpClient(engine) {
+    configureNetwork(config, debugLogging, logger)
+}
+
+private fun HttpClientConfig<*>.configureNetwork(config: NetworkConfig, debugLogging: Boolean, logger: Logger) {
     expectSuccess = true
 
     defaultRequest {

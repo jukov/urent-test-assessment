@@ -14,7 +14,11 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.headersOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -22,6 +26,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HttpClientFactoryTest {
+    @Test
+    fun `closing default client closes its engine`() = runTest {
+        val client = createHttpClient()
+        val engineJob = requireNotNull(client.engine.coroutineContext[Job])
+
+        client.close()
+
+        withContext(Dispatchers.IO) {
+            withTimeout(5_000) { engineJob.join() }
+        }
+        assertTrue(engineJob.isCompleted)
+    }
+
     @Test
     fun `configures base url and json accept header`() = runTest {
         val engine = MockEngine { request ->
