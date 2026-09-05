@@ -54,13 +54,10 @@ internal fun MapScreen(
             controller?.cityCamera?.focus(selected, requireNotNull(sheetLayout).second)
         }
     }
-    val markers = remember(state.cities, selected) {
-        if (selected != null && state.cities.none { it.id == selected.id }) state.cities + selected else state.cities
-    }
     BackHandler(enabled = selected != null) { onSelectCity(null) }
     Box(Modifier.fillMaxSize()) {
         MapSurface(
-            markers,
+            state.cities,
             camera,
             onIdle,
             { controller = it },

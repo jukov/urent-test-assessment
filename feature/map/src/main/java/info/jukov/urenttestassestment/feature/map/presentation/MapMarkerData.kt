@@ -45,27 +45,6 @@ internal class MapMarkerData {
     }
 }
 
-// State order is least to most recently returned by the API; each refreshed ID
-// becomes recent, so eviction is independent of population-based rendering order.
-internal fun mergeMapCities(cached: List<MapCityUi>, loaded: List<MapCityUi>): List<MapCityUi> {
-    // Work on a private copy so cancellation cannot mutate the published state.
-    val cities = CityLruMap()
-    cached.forEach { cities[it.id] = it }
-    loaded.forEach { cities[it.id] = it }
-    val merged = cities.values.toList()
-    return if (merged == cached) cached else merged
-}
-
-private class CityLruMap : LinkedHashMap<Long, MapCityUi>(MAP_CITY_CACHE_CAPACITY * 2, LRU_LOAD_FACTOR, true) {
-    // Access order refreshes an existing node without removing and allocating it again.
-    // LinkedHashMap removes the eldest in O(1) immediately after an overflowing put.
-    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, MapCityUi>?): Boolean =
-        size > MAP_CITY_CACHE_CAPACITY
-}
-
-private const val LRU_LOAD_FACTOR = 0.75f
-internal const val MAP_CITY_CACHE_CAPACITY = 1_000
-
 internal const val EMPTY_CITY_GEOJSON = "{\"type\":\"FeatureCollection\",\"features\":[]}"
 internal const val POPULATION_PRIORITY = "populationPriority"
 
