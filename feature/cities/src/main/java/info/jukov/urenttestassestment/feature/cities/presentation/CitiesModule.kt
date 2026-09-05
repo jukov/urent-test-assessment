@@ -1,5 +1,6 @@
 package info.jukov.urenttestassestment.feature.cities.presentation
 
+import info.jukov.urenttestassestment.core.ui.city.CountryNameFormatter
 import info.jukov.urenttestassestment.feature.cities.data.CitiesApi
 import info.jukov.urenttestassestment.feature.cities.data.DefaultCitiesRepository
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesRepository

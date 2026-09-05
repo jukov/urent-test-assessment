@@ -63,7 +63,7 @@ class MapViewModelTest {
     fun `content is published through Orbit`() = runTest(dispatcher) {
         viewModel { success(1) }.test(this) {
             containerHost.onCameraIdle(camera, viewport)
-            expectState { MapState(listOf(MapCityUi(1, "City 1", 55.75, 37.62, 100)), MapLoadState.Content) }
+            expectState { MapState(listOf(MapCityUi(1, "City 1", 55.75, 37.62, 100, "RU")), MapLoadState.Content) }
         }
     }
 
@@ -161,10 +161,12 @@ class MapViewModelTest {
         }
         vm.onCameraIdle(camera, viewport)
         advanceUntilIdle()
+        vm.selectCity(1)
         vm.onCameraIdle(camera, viewport.copy(radius = 30000))
         advanceUntilIdle()
 
-        assertEquals(listOf(MapCityUi(1, "Updated", 56.0, 38.0, 200)), vm.container.stateFlow.value.cities)
+        assertEquals(listOf(MapCityUi(1, "Updated", 56.0, 38.0, 200, "RU")), vm.container.stateFlow.value.cities)
+        assertEquals(vm.container.stateFlow.value.cities.single(), vm.container.stateFlow.value.selectedCity)
     }
 
     @Test
@@ -207,6 +209,60 @@ class MapViewModelTest {
             val state = fields.filterIndexed { index, _ -> mask and (1 shl index) != 0 }.toMap()
             assertEquals(MapCamera(), MapViewModel(repo, SavedStateHandle(state), dispatcher).camera)
         }
+    }
+
+    @Test
+    fun `selection uses loaded data and survives viewport failure and process recreation`() = runTest(dispatcher) {
+        val savedState = SavedStateHandle()
+        var calls = 0
+        val repository = object : MapRepository {
+            override suspend fun cities(viewport: MapViewport): MapResult =
+                if (++calls == 1) success(7) else MapResult.Failure
+        }
+        val vm = MapViewModel(repository, savedState, dispatcher)
+        vm.onCameraIdle(camera, viewport)
+        advanceUntilIdle()
+        vm.selectCity(7)
+        val city = vm.container.stateFlow.value.selectedCity!!
+        assertEquals("RU", city.countryCode)
+        assertEquals(100L, city.population)
+        vm.selectCity(999)
+        assertEquals(city, vm.container.stateFlow.value.selectedCity)
+        vm.selectCity(7)
+        vm.onCameraIdle(camera, viewport.copy(radius = 30000))
+        advanceUntilIdle()
+        assertEquals(city, vm.container.stateFlow.value.selectedCity)
+        val restored =
+            MapViewModel(
+                repository,
+                SavedStateHandle(
+                    savedState.keys().associateWith {
+                        savedState.get<Any?>(it)
+                    }
+                ),
+                dispatcher
+            )
+        assertEquals(city, restored.container.stateFlow.value.selectedCity)
+        restored.selectCity(null)
+        assertEquals(null, restored.container.stateFlow.value.selectedCity)
+    }
+
+    @Test
+    fun `selecting another pin replaces details and closing clears saved selection`() = runTest(dispatcher) {
+        val savedState = SavedStateHandle()
+        val repository = object : MapRepository {
+            override suspend fun cities(viewport: MapViewport) = MapResult.Success(
+                listOf(City(1, "Moscow", "RU", 100, 55.75, 37.62), City(2, "Paris", "FR", 200, 48.85, 2.35))
+            )
+        }
+        val vm = MapViewModel(repository, savedState, dispatcher)
+        vm.onCameraIdle(camera, viewport)
+        advanceUntilIdle()
+        vm.selectCity(1)
+        vm.selectCity(2)
+        assertEquals("Paris", vm.container.stateFlow.value.selectedCity?.name)
+        vm.selectCity(null)
+        assertEquals(null, MapViewModel(repository, savedState, dispatcher).container.stateFlow.value.selectedCity)
     }
 
     private fun viewModel(load: suspend (MapViewport) -> MapResult) = MapViewModel(

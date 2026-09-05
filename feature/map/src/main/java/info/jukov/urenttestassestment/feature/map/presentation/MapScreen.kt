@@ -1,9 +1,11 @@
 package info.jukov.urenttestassestment.feature.map.presentation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -22,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -35,22 +38,34 @@ internal fun MapScreen(
     state: MapState,
     camera: MapCamera,
     onIdle: (MapCamera, MapViewport) -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onSelectCity: (Long?) -> Unit,
+    onSearchCity: (String) -> Unit
 ) {
     var controller by remember { mutableStateOf<MapController?>(null) }
     var styleError by remember { mutableStateOf(false) }
+    val selected = state.selectedCity
+    val markers = remember(state.cities, selected) {
+        if (selected != null && state.cities.none { it.id == selected.id }) state.cities + selected else state.cities
+    }
+    BackHandler(enabled = selected != null) { onSelectCity(null) }
     Box(Modifier.fillMaxSize()) {
         MapSurface(
-            state.cities,
+            markers,
             camera,
             onIdle,
             { controller = it },
             { styleError = it },
-            Modifier.fillMaxSize()
+            Modifier.fillMaxSize(),
+            selectedCityId = selected?.id,
+            selectedColor = MaterialTheme.colorScheme.primary.toArgb(),
+            onSelectCity = onSelectCity
         )
-        MapZoomControls(
+        MapCityOverlay(
+            selected,
             onZoom = { controller?.zoom(it) },
-            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp)
+            onDismiss = { onSelectCity(null) },
+            onSearch = { selected?.let { onSearchCity(it.name) } }
         )
         MapStatus(
             state = if (styleError) MapLoadState.Error else state.loadState,
@@ -65,7 +80,7 @@ internal fun MapScreen(
 
 @Composable
 internal fun MapZoomControls(onZoom: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier, shape = RoundedCornerShape(24.dp), shadowElevation = 4.dp) {
+    Surface(modifier.height(MAP_ZOOM_CONTROLS_HEIGHT), shape = RoundedCornerShape(24.dp), shadowElevation = 4.dp) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             ZoomButton(stringResource(R.string.map_zoom_in), "+") { onZoom(true) }
             HorizontalDivider(Modifier.size(width = 32.dp, height = 1.dp))
@@ -108,3 +123,5 @@ internal fun MapStatus(state: MapLoadState, onRetry: () -> Unit, modifier: Modif
         }
     }
 }
+
+internal val MAP_ZOOM_CONTROLS_HEIGHT = 97.dp

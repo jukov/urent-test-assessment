@@ -1,0 +1,10 @@
+<resources>
+    <string name="city_label">City</string>
+    <string name="city_country_label">Country</string>
+    <string name="city_population_label">Population</string>
+    <string name="city_population_value">%1$s people</string>
+    <string name="city_search">Search city information</string>
+    <string name="city_browser_unavailable">No browser is available on this device</string>
+    <string name="city_details_title">City information</string>
+    <string name="city_back">Back</string>
+</resources>

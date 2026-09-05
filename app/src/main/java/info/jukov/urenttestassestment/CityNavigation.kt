@@ -31,10 +31,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import info.jukov.urenttestassestment.core.ui.city.CityDetails
 import info.jukov.urenttestassestment.core.ui.icon.List
 import info.jukov.urenttestassestment.core.ui.icon.Map
 import info.jukov.urenttestassestment.core.ui.icon.URentIcons
 import info.jukov.urenttestassestment.feature.cities.presentation.CitiesRoute
+import info.jukov.urenttestassestment.feature.cities.presentation.CityDetailsRoute
 import info.jukov.urenttestassestment.feature.map.presentation.MapRoute
 import kotlinx.serialization.Serializable
 
@@ -44,9 +47,17 @@ internal data object CityListDestination
 @Serializable
 internal data object CityMapDestination
 
+@Serializable
+internal data class CityDetailsDestination(
+    val id: Long,
+    val name: String,
+    val countryCode: String,
+    val population: Long
+)
+
 @Composable
 internal fun CityNavigation(
-    listContent: @Composable () -> Unit = { CitiesRoute() },
+    listContent: @Composable ((CityDetails) -> Unit) -> Unit = { CitiesRoute(onOpenCity = it) },
     mapContent: @Composable () -> Unit = { MapRoute() }
 ) {
     val navController = rememberNavController()
@@ -54,15 +65,18 @@ internal fun CityNavigation(
     val selectedTab = CityTab.entries.firstOrNull { tab ->
         entry?.destination?.hasRoute(tab.destination::class) == true
     } ?: CityTab.List
+    val showingDetails = entry?.destination?.hasRoute<CityDetailsDestination>() == true
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            CityBottomBar(selectedTab) { tab ->
-                if (tab != selectedTab) {
-                    navController.navigate(tab.destination) {
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
+            if (!showingDetails) {
+                CityBottomBar(selectedTab) { tab ->
+                    if (tab != selectedTab) {
+                        navController.navigate(tab.destination) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 }
             }
@@ -73,7 +87,19 @@ internal fun CityNavigation(
             startDestination = CityListDestination,
             modifier = Modifier.padding(padding).consumeWindowInsets(padding)
         ) {
-            composable<CityListDestination> { listContent() }
+            composable<CityListDestination> {
+                listContent { city ->
+                    navController.navigate(
+                        CityDetailsDestination(city.id, city.name, city.countryCode, city.population)
+                    )
+                }
+            }
+            composable<CityDetailsDestination> { detailsEntry ->
+                val city = detailsEntry.toRoute<CityDetailsDestination>()
+                CityDetailsRoute(CityDetails(city.id, city.name, city.countryCode, city.population)) {
+                    navController.popBackStack()
+                }
+            }
             composable<CityMapDestination> { mapContent() }
         }
     }
