@@ -7,11 +7,30 @@ import org.maplibre.android.maps.ImageStretches
 
 class MarkerBubbleTest {
     @Test
-    fun `sprite density gives an sixteen dp outer corner radius`() {
+    fun `sprite density gives a sixteen dp outer corner radius`() {
         val pixelRatio = MarkerBubbleShape.DENSITY_DPI / 160f
 
         assertEquals(16f, MarkerBubbleShape.CORNER_RADIUS_PX / pixelRatio, 0f)
         assertEquals(1f, MarkerBubbleShape.BORDER_WIDTH_PX / pixelRatio, 0f)
+    }
+
+    @Test
+    fun `pointer has a small rounded cap contained in its fixed width`() {
+        val radius = MarkerBubbleShape.POINTER_TIP_RADIUS_PX
+
+        assertEquals(2f, radius / MarkerBubbleShape.PIXEL_RATIO, 0f)
+        assertTrue(radius > MarkerBubbleShape.BORDER_WIDTH_PX / 2)
+        assertTrue(radius < MarkerBubbleShape.POINTER_HALF_WIDTH_PX)
+        assertTrue(MarkerBubbleShape.POINTER_TIP_CENTER_Y_PX - radius >= MarkerBubbleShape.BODY_HEIGHT_PX)
+    }
+
+    @Test
+    fun `rounded cap outer edge keeps the original coordinate anchor`() {
+        val strokeInset = MarkerBubbleShape.BORDER_WIDTH_PX / 2
+        val pathRadius = MarkerBubbleShape.POINTER_TIP_RADIUS_PX - strokeInset
+        val outerBottom = MarkerBubbleShape.POINTER_TIP_CENTER_Y_PX + pathRadius + strokeInset
+
+        assertEquals(MarkerBubbleShape.HEIGHT_PX.toFloat(), outerBottom, 0f)
     }
 
     @Test

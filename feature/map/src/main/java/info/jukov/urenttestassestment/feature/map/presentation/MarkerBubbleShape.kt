@@ -23,6 +23,8 @@ internal object MarkerBubbleShape {
     const val POINTER_HALF_WIDTH_PX = 8f
     const val CORNER_RADIUS_PX = 32f
     const val BORDER_WIDTH_PX = 2f
+    const val POINTER_TIP_RADIUS_PX = 4f
+    const val POINTER_TIP_CENTER_Y_PX = HEIGHT_PX - POINTER_TIP_RADIUS_PX
     val stretchesX = listOf(
         ImageStretches(CORNER_RADIUS_PX, CENTER_X_PX - POINTER_HALF_WIDTH_PX),
         ImageStretches(CENTER_X_PX + POINTER_HALF_WIDTH_PX, WIDTH_PX - CORNER_RADIUS_PX)
@@ -60,13 +62,27 @@ private fun markerPointer(inset: Float): Path {
     val halfWidth = MarkerBubbleShape.POINTER_HALF_WIDTH_PX
     // Overlap the body so the union has a single outline without an internal border.
     val root = MarkerBubbleShape.BODY_HEIGHT_PX - MarkerBubbleShape.BORDER_WIDTH_PX
-    val tip = MarkerBubbleShape.HEIGHT_PX - inset
+    val tipRadius = MarkerBubbleShape.POINTER_TIP_RADIUS_PX - inset
+    val tipCenterY = MarkerBubbleShape.POINTER_TIP_CENTER_Y_PX
+    val tipArc = RectF(center - tipRadius, tipCenterY - tipRadius, center + tipRadius, tipCenterY + tipRadius)
     return Path().apply {
         moveTo(center - halfWidth, root)
-        cubicTo(center - halfWidth / 2, root, center - inset, tip, center, tip)
-        cubicTo(center + inset, tip, center + halfWidth / 2, root, center + halfWidth, root)
+        cubicTo(
+            center - halfWidth / 2,
+            root,
+            center - tipRadius,
+            tipCenterY - tipRadius,
+            center - tipRadius,
+            tipCenterY
+        )
+        // A circular cap makes the tip visibly round, with vertical tangents matching both sides.
+        arcTo(tipArc, TIP_ARC_START_DEGREES, TIP_ARC_SWEEP_DEGREES, false)
+        cubicTo(center + tipRadius, tipCenterY - tipRadius, center + halfWidth / 2, root, center + halfWidth, root)
         close()
     }
 }
 
 private const val MARKER_BACKGROUND_COLOR = 0xFF4E495B.toInt()
+
+private const val TIP_ARC_START_DEGREES = 180f
+private const val TIP_ARC_SWEEP_DEGREES = -180f
