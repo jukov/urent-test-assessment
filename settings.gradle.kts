@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "URent test assestment"
 include(":app")
+include(":core:network")
