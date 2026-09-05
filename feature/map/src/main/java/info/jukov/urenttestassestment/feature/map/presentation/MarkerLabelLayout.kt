@@ -5,8 +5,10 @@ import org.maplibre.android.style.layers.Property
 internal object MarkerLabelLayout {
     const val TEXT_SIZE = 12f
     const val TEXT_ANCHOR = Property.TEXT_ANCHOR_BOTTOM
-    private const val VERTICAL_PADDING = 8f
-    private const val HORIZONTAL_PADDING = 10f
+
+    // Reserve room for 16dp corners and the fixed pointer even on the shortest labels.
+    private const val VERTICAL_PADDING = 10f
+    private const val HORIZONTAL_PADDING = 20f
     val padding = arrayOf(VERTICAL_PADDING, HORIZONTAL_PADDING, VERTICAL_PADDING, HORIZONTAL_PADDING)
 
     // icon-text-fit ignores icon-anchor. Anchor the text's bottom above the body padding

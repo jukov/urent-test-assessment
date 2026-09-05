@@ -15,13 +15,13 @@ import org.maplibre.android.maps.ImageStretches
 internal object MarkerBubbleShape {
     const val DENSITY_DPI = DisplayMetrics.DENSITY_XHIGH
     const val PIXEL_RATIO = DENSITY_DPI / DisplayMetrics.DENSITY_DEFAULT.toFloat()
-    const val WIDTH_PX = 64
-    const val BODY_HEIGHT_PX = 40
+    const val WIDTH_PX = 96
+    const val BODY_HEIGHT_PX = 72
     const val POINTER_HEIGHT_PX = 12f
     const val HEIGHT_PX = BODY_HEIGHT_PX + POINTER_HEIGHT_PX.toInt()
     const val CENTER_X_PX = WIDTH_PX / 2f
     const val POINTER_HALF_WIDTH_PX = 8f
-    const val CORNER_RADIUS_PX = 16f
+    const val CORNER_RADIUS_PX = 32f
     const val BORDER_WIDTH_PX = 2f
     val stretchesX = listOf(
         ImageStretches(CORNER_RADIUS_PX, CENTER_X_PX - POINTER_HALF_WIDTH_PX),

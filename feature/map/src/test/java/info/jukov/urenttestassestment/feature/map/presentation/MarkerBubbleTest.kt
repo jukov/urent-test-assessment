@@ -7,10 +7,10 @@ import org.maplibre.android.maps.ImageStretches
 
 class MarkerBubbleTest {
     @Test
-    fun `sprite density gives an eight dp outer corner radius`() {
+    fun `sprite density gives an sixteen dp outer corner radius`() {
         val pixelRatio = MarkerBubbleShape.DENSITY_DPI / 160f
 
-        assertEquals(8f, MarkerBubbleShape.CORNER_RADIUS_PX / pixelRatio, 0f)
+        assertEquals(16f, MarkerBubbleShape.CORNER_RADIUS_PX / pixelRatio, 0f)
         assertEquals(1f, MarkerBubbleShape.BORDER_WIDTH_PX / pixelRatio, 0f)
     }
 
@@ -34,7 +34,7 @@ class MarkerBubbleTest {
     @Test
     fun `short and long labels preserve corners and a centered fixed width pointer`() {
         val ratio = MarkerBubbleShape.PIXEL_RATIO
-        listOf(28f, 40f, 100f, 180f).forEach { widthDp ->
+        listOf(40f, 44f, 100f, 180f).forEach { widthDp ->
             val widthPx = widthDp * ratio
             fun mapped(x: Float) = stretchedCoordinate(
                 x,
@@ -44,11 +44,27 @@ class MarkerBubbleTest {
             val radius = MarkerBubbleShape.CORNER_RADIUS_PX
             val center = MarkerBubbleShape.CENTER_X_PX
             val halfPointer = MarkerBubbleShape.POINTER_HALF_WIDTH_PX
-            assertEquals(8f, mapped(radius) / ratio, 0f)
-            assertEquals(8f, (widthPx - mapped(MarkerBubbleShape.WIDTH_PX - radius)) / ratio, 0f)
+            assertEquals(16f, mapped(radius) / ratio, 0f)
+            assertEquals(16f, (widthPx - mapped(MarkerBubbleShape.WIDTH_PX - radius)) / ratio, 0f)
             assertEquals(widthPx / 2, mapped(center), 0f)
             assertEquals(halfPointer * 2, mapped(center + halfPointer) - mapped(center - halfPointer), 0f)
         }
+    }
+
+    @Test
+    fun `shortest label has enough room for fixed corners and pointer`() {
+        val ratio = MarkerBubbleShape.PIXEL_RATIO
+        val fixedWidth = MarkerBubbleShape.WIDTH_PX - MarkerBubbleShape.stretchesX.sumOf {
+            (it.second - it.first).toDouble()
+        }.toFloat()
+        val fixedHeight = MarkerBubbleShape.BODY_HEIGHT_PX - MarkerBubbleShape.stretchesY.sumOf {
+            (it.second - it.first).toDouble()
+        }.toFloat()
+        val minimumWidth = MarkerLabelLayout.padding[1] + MarkerLabelLayout.padding[3]
+        val minimumHeight = MarkerLabelLayout.TEXT_SIZE + MarkerLabelLayout.padding[0] + MarkerLabelLayout.padding[2]
+
+        assertTrue(minimumWidth * ratio >= fixedWidth)
+        assertTrue(minimumHeight * ratio >= fixedHeight)
     }
 
     @Test
