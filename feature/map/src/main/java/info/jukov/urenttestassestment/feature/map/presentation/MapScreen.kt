@@ -112,7 +112,7 @@ private fun ZoomButton(description: String, symbol: String, onClick: () -> Unit)
 @Composable
 internal fun MapStatus(state: MapLoadState, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     if (state == MapLoadState.Content) return
-    Surface(modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 2.dp) {
+    Surface(modifier, shape = MaterialTheme.shapes.medium) {
         Column(
             Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

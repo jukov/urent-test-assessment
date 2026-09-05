@@ -23,6 +23,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -113,7 +117,20 @@ internal fun CityNavigation(
 
 @Composable
 internal fun CityBottomBar(selectedTab: CityTab, onSelect: (CityTab) -> Unit) {
-    Surface(shadowElevation = 4.dp) {
+    Surface(
+        modifier = Modifier.drawWithCache {
+            val shadowHeight = 6.dp.toPx()
+            val shadow = Brush.verticalGradient(
+                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.12f)),
+                startY = -shadowHeight,
+                endY = 0f
+            )
+            onDrawBehind {
+                // Keep the shadow in a narrow strip above the bar, without a blurred layer.
+                drawRect(shadow, topLeft = Offset(0f, -shadowHeight), size = Size(size.width, shadowHeight))
+            }
+        }
+    ) {
         Row(Modifier.fillMaxWidth().navigationBarsPadding().height(64.dp).selectableGroup()) {
             CityTab.entries.forEach { tab ->
                 val selected = tab == selectedTab
