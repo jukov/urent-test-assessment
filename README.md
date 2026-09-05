@@ -26,6 +26,21 @@ plugins {
 Оба плагина также поддерживают Kotlin JVM-модули. Задача `:<module>:test` добавляется
 в команду CI при подключении JVM-модуля.
 
+## Логирование
+
+Модуль `:core:logging` предоставляет единую точку входа `AppLogger` и Timber backend.
+`URentApplication` включает `DebugTree` только для debug-сборок; при инициализации release-сборки
+все Timber trees удаляются, поэтому сообщения, query-параметры и тела ответов не записываются.
+
+```kotlin
+AppLogger.withTag("Cities").debug("Loaded page %d", page)
+AppLogger.error(error, "Failed to load cities")
+```
+
+Feature- и network-код не должен импортировать Timber или `android.util.Log`. Прямой импорт
+`android.util.Log` дополнительно запрещён правилом Detekt. Подробное сетевое логирование следует
+включать только когда `Logging.isDetailedLoggingEnabled` равно `true`.
+
 ## GitHub Actions
 
 [Workflow](.github/workflows/ci.yml) запускается для pull request, push в `main` и вручную.
