@@ -1,5 +1,6 @@
 package info.jukov.urenttestassestment.feature.map.presentation
 
+import android.content.Context
 import android.view.View
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -17,6 +18,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import info.jukov.urenttestassestment.feature.map.domain.MapViewport
 import org.maplibre.android.MapLibre
 import org.maplibre.android.maps.MapView
+import org.maplibre.android.storage.FileSource
 
 @Composable
 internal fun MapSurface(
@@ -33,10 +35,7 @@ internal fun MapSurface(
     val currentError by rememberUpdatedState(onStyleError)
     val currentController by rememberUpdatedState(onController)
     var controller by remember { mutableStateOf<MapController?>(null) }
-    val mapView = remember {
-        MapLibre.getInstance(context)
-        MapView(context).apply { onCreate(null) }
-    }
+    val mapView = remember { createMapView(context) }
     DisposableEffect(mapView, lifecycle) {
         var disposed = false
         val layoutListener = View.OnLayoutChangeListener {
@@ -85,4 +84,10 @@ internal fun MapSurface(
         }
     }
     AndroidView(factory = { mapView }, modifier = modifier, update = { controller?.update(cities) })
+}
+
+private fun createMapView(context: Context): MapView {
+    MapLibre.getInstance(context)
+    FileSource.getInstance(context).setResourceTransform(MarkerFontResources::transform)
+    return MapView(context).apply { onCreate(null) }
 }

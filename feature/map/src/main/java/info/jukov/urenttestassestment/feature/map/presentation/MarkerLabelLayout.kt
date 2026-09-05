@@ -3,7 +3,12 @@ package info.jukov.urenttestassestment.feature.map.presentation
 import org.maplibre.android.style.layers.Property
 
 internal object MarkerLabelLayout {
+    const val FONT = "Roboto Bold"
     const val TEXT_SIZE = 12f
+    const val LINE_HEIGHT = 18f
+    const val LINE_HEIGHT_EM = LINE_HEIGHT / TEXT_SIZE
+    const val LETTER_SPACING_EM = 0f
+    const val TEXT_JUSTIFY = Property.TEXT_JUSTIFY_CENTER
     const val TEXT_ANCHOR = Property.TEXT_ANCHOR_BOTTOM
 
     // Reserve room for 16dp corners and the fixed pointer even on the shortest labels.

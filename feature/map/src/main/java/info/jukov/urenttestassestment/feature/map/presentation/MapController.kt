@@ -17,6 +17,9 @@ import org.maplibre.android.style.layers.PropertyFactory.textAnchor
 import org.maplibre.android.style.layers.PropertyFactory.textColor
 import org.maplibre.android.style.layers.PropertyFactory.textField
 import org.maplibre.android.style.layers.PropertyFactory.textFont
+import org.maplibre.android.style.layers.PropertyFactory.textJustify
+import org.maplibre.android.style.layers.PropertyFactory.textLetterSpacing
+import org.maplibre.android.style.layers.PropertyFactory.textLineHeight
 import org.maplibre.android.style.layers.PropertyFactory.textMaxWidth
 import org.maplibre.android.style.layers.PropertyFactory.textOffset
 import org.maplibre.android.style.layers.PropertyFactory.textSize
@@ -65,7 +68,10 @@ internal class MapController(
                     textAnchor(MarkerLabelLayout.TEXT_ANCHOR),
                     textOffset(MarkerLabelLayout.textOffset),
                     textColor(Color.WHITE),
-                    textFont(arrayOf("Noto Sans Regular")),
+                    textFont(arrayOf(MarkerLabelLayout.FONT)),
+                    textLineHeight(MarkerLabelLayout.LINE_HEIGHT_EM),
+                    textLetterSpacing(MarkerLabelLayout.LETTER_SPACING_EM),
+                    textJustify(MarkerLabelLayout.TEXT_JUSTIFY),
                     textMaxWidth(LABEL_MAX_WIDTH)
                 )
             )
