@@ -12,6 +12,12 @@ import org.junit.Test
 
 class CitiesScreenTest {
     @Test
+    fun `snackbar uses tall container and compact dismiss icon`() {
+        assertEquals(72.dp, CITIES_SNACKBAR_MIN_HEIGHT)
+        assertEquals(18.dp, CITIES_SNACKBAR_DISMISS_ICON_SIZE)
+    }
+
+    @Test
     fun `city content and skeleton use specified row dimensions`() {
         assertEquals(54.dp, CITY_ROW_HEIGHT)
         assertEquals(2, CITY_TITLE_MAX_LINES)

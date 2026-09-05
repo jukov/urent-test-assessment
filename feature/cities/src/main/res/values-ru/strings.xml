@@ -7,4 +7,5 @@
     <string name="cities_error_network">Проверьте подключение к интернету и попробуйте снова</string>
     <string name="cities_error_generic">Не удалось загрузить города</string>
     <string name="cities_retry">Повторить</string>
+    <string name="cities_dismiss">Скрыть</string>
 </resources>

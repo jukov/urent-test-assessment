@@ -41,7 +41,8 @@ public fun CitiesRoute(onOpenCity: (Long) -> Unit = {}, viewModel: CitiesViewMod
         )
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding()
+            modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding(),
+            snackbar = { data -> CitiesSnackbar(data) }
         )
     }
 }

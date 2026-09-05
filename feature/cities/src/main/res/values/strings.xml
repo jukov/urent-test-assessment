@@ -7,4 +7,5 @@
     <string name="cities_error_network">Check your internet connection and try again</string>
     <string name="cities_error_generic">Could not load cities</string>
     <string name="cities_retry">Retry</string>
+    <string name="cities_dismiss">Dismiss</string>
 </resources>
