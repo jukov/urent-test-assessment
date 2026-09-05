@@ -1,22 +1,32 @@
-@file:Suppress("MaxLineLength")
-
 package info.jukov.urenttestassestment.core.ui.icon
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-val URentIcons.Close: ImageVector
-    get() = closeIcon
-
-private val closeIcon by lazy {
-    ImageVector.Builder("Close", 24.dp, 24.dp, 48f, 48f)
-        .addPath(
-            pathData = PathParser().parsePathString(
-                "M37.3788 10.6424C36.5506 9.81418 35.2127 9.81418 34.3845 10.6424L24 21.0057L13.6155 10.6212C12.7873 9.79295 11.4494 9.79295 10.6212 10.6212C9.79295 11.4494 9.79295 12.7873 10.6212 13.6155L21.0057 24L10.6212 34.3845C9.79295 35.2127 9.79295 36.5506 10.6212 37.3788C11.4494 38.2071 12.7873 38.2071 13.6155 37.3788L24 26.9943L34.3845 37.3788C35.2127 38.2071 36.5506 38.2071 37.3788 37.3788C38.2071 36.5506 38.2071 35.2127 37.3788 34.3845L26.9943 24L37.3788 13.6155C38.1858 12.8085 38.1858 11.4494 37.3788 10.6424Z"
-            ).toNodes(),
-            fill = SolidColor(Color.White)
-        ).build()
+val URentIcons.Close: ImageVector by lazy {
+    ImageVector.Builder("Close", 24.dp, 24.dp, 48f, 48f).apply {
+        path(fill = SolidColor(Color.White)) {
+            moveTo(37.3788f, 10.6424f)
+            curveTo(36.5506f, 9.81418f, 35.2127f, 9.81418f, 34.3845f, 10.6424f)
+            lineTo(24f, 21.0057f)
+            lineTo(13.6155f, 10.6212f)
+            curveTo(12.7873f, 9.79295f, 11.4494f, 9.79295f, 10.6212f, 10.6212f)
+            curveTo(9.79295f, 11.4494f, 9.79295f, 12.7873f, 10.6212f, 13.6155f)
+            lineTo(21.0057f, 24f)
+            lineTo(10.6212f, 34.3845f)
+            curveTo(9.79295f, 35.2127f, 9.79295f, 36.5506f, 10.6212f, 37.3788f)
+            curveTo(11.4494f, 38.2071f, 12.7873f, 38.2071f, 13.6155f, 37.3788f)
+            lineTo(24f, 26.9943f)
+            lineTo(34.3845f, 37.3788f)
+            curveTo(35.2127f, 38.2071f, 36.5506f, 38.2071f, 37.3788f, 37.3788f)
+            curveTo(38.2071f, 36.5506f, 38.2071f, 35.2127f, 37.3788f, 34.3845f)
+            lineTo(26.9943f, 24f)
+            lineTo(37.3788f, 13.6155f)
+            curveTo(38.1858f, 12.8085f, 38.1858f, 11.4494f, 37.3788f, 10.6424f)
+            close()
+        }
+    }.build()
 }

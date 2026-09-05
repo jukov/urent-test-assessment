@@ -1,22 +1,54 @@
-@file:Suppress("MaxLineLength")
-
 package info.jukov.urenttestassestment.core.ui.icon
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-val URentIcons.Map: ImageVector
-    get() = mapIcon
-
-private val mapIcon by lazy {
-    ImageVector.Builder("Map", 24.dp, 24.dp, 24f, 24f)
-        .addPath(
-            pathData = PathParser().parsePathString(
-                "M14.35 20.775L9 18.9L4.35 20.7C4.01667 20.8333 3.70833 20.7957 3.425 20.587C3.14167 20.379 3 20.1 3 19.75V5.75001C3 5.53335 3.06267 5.34168 3.188 5.17501C3.31267 5.00835 3.48333 4.88335 3.7 4.80001L8.35 3.22501C8.56667 3.15835 8.78333 3.12068 9 3.11201C9.21667 3.10401 9.43333 3.14168 9.65 3.22501L15 5.10001L19.65 3.30001C19.9833 3.16668 20.2917 3.20401 20.575 3.41201C20.8583 3.62068 21 3.90001 21 4.25001V18.25C21 18.4667 20.9373 18.6583 20.812 18.825C20.6873 18.9917 20.5167 19.1167 20.3 19.2L15.65 20.775C15.4333 20.8417 15.2167 20.879 15 20.887C14.7833 20.8957 14.5667 20.8583 14.35 20.775ZM14 18.55V6.85001L10 5.45001V17.15L14 18.55ZM16 18.55L19 17.55V5.70001L16 6.85001V18.55ZM5 18.3L8 17.15V5.45001L5 6.45001V18.3Z"
-            ).toNodes(),
-            fill = SolidColor(Color(0xFF777381))
-        ).build()
+val URentIcons.Map: ImageVector by lazy {
+    ImageVector.Builder("Map", 24.dp, 24.dp, 24f, 24f).apply {
+        path(fill = SolidColor(Color(0xFF777381))) {
+            moveTo(14.35f, 20.775f)
+            lineTo(9f, 18.9f)
+            lineTo(4.35f, 20.7f)
+            curveTo(4.01667f, 20.8333f, 3.70833f, 20.7957f, 3.425f, 20.587f)
+            curveTo(3.14167f, 20.379f, 3f, 20.1f, 3f, 19.75f)
+            lineTo(3f, 5.75001f)
+            curveTo(3f, 5.53335f, 3.06267f, 5.34168f, 3.188f, 5.17501f)
+            curveTo(3.31267f, 5.00835f, 3.48333f, 4.88335f, 3.7f, 4.80001f)
+            lineTo(8.35f, 3.22501f)
+            curveTo(8.56667f, 3.15835f, 8.78333f, 3.12068f, 9f, 3.11201f)
+            curveTo(9.21667f, 3.10401f, 9.43333f, 3.14168f, 9.65f, 3.22501f)
+            lineTo(15f, 5.10001f)
+            lineTo(19.65f, 3.30001f)
+            curveTo(19.9833f, 3.16668f, 20.2917f, 3.20401f, 20.575f, 3.41201f)
+            curveTo(20.8583f, 3.62068f, 21f, 3.90001f, 21f, 4.25001f)
+            lineTo(21f, 18.25f)
+            curveTo(21f, 18.4667f, 20.9373f, 18.6583f, 20.812f, 18.825f)
+            curveTo(20.6873f, 18.9917f, 20.5167f, 19.1167f, 20.3f, 19.2f)
+            lineTo(15.65f, 20.775f)
+            curveTo(15.4333f, 20.8417f, 15.2167f, 20.879f, 15f, 20.887f)
+            curveTo(14.7833f, 20.8957f, 14.5667f, 20.8583f, 14.35f, 20.775f)
+            close()
+            moveTo(14f, 18.55f)
+            lineTo(14f, 6.85001f)
+            lineTo(10f, 5.45001f)
+            lineTo(10f, 17.15f)
+            lineTo(14f, 18.55f)
+            close()
+            moveTo(16f, 18.55f)
+            lineTo(19f, 17.55f)
+            lineTo(19f, 5.70001f)
+            lineTo(16f, 6.85001f)
+            lineTo(16f, 18.55f)
+            close()
+            moveTo(5f, 18.3f)
+            lineTo(8f, 17.15f)
+            lineTo(8f, 5.45001f)
+            lineTo(5f, 6.45001f)
+            lineTo(5f, 18.3f)
+            close()
+        }
+    }.build()
 }

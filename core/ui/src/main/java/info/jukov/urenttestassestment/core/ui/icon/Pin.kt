@@ -1,22 +1,46 @@
-@file:Suppress("MaxLineLength")
-
 package info.jukov.urenttestassestment.core.ui.icon
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-val URentIcons.Pin: ImageVector
-    get() = pinIcon
-
-private val pinIcon by lazy {
-    ImageVector.Builder("Pin", 24.dp, 24.dp, 24f, 24f)
-        .addPath(
-            pathData = PathParser().parsePathString(
-                "M12 12C12.55 12 13.0208 11.8042 13.4125 11.4125C13.8042 11.0208 14 10.55 14 10C14 9.45 13.8042 8.97917 13.4125 8.5875C13.0208 8.19583 12.55 8 12 8C11.45 8 10.9792 8.19583 10.5875 8.5875C10.1958 8.97917 10 9.45 10 10C10 10.55 10.1958 11.0208 10.5875 11.4125C10.9792 11.8042 11.45 12 12 12ZM11.3295 18.7225C11.705 19.081 12.295 19.081 12.6705 18.7225C14.3682 17.1015 15.653 15.6148 16.525 14.2625C17.5083 12.7375 18 11.3833 18 10.2C18 8.38333 17.4208 6.89583 16.2625 5.7375C15.1042 4.57917 13.6833 4 12 4C10.3167 4 8.89583 4.57917 7.7375 5.7375C6.57917 6.89583 6 8.38333 6 10.2C6 11.3833 6.49167 12.7375 7.475 14.2625C8.34699 15.6148 9.63182 17.1015 11.3295 18.7225ZM12.6443 21.4435C12.2755 21.767 11.7245 21.7669 11.3557 21.4435C8.99363 19.3711 7.20422 17.4358 5.9875 15.6375C4.6625 13.6792 4 11.8667 4 10.2C4 7.7 4.80417 5.70833 6.4125 4.225C8.02083 2.74167 9.88333 2 12 2C14.1167 2 15.9792 2.74167 17.5875 4.225C19.1958 5.70833 20 7.7 20 10.2C20 11.8667 19.3375 13.6792 18.0125 15.6375C16.7958 17.4358 15.0064 19.3711 12.6443 21.4435Z"
-            ).toNodes(),
-            fill = SolidColor(Color(0xFF777381))
-        ).build()
+val URentIcons.Pin: ImageVector by lazy {
+    ImageVector.Builder("Pin", 24.dp, 24.dp, 24f, 24f).apply {
+        path(fill = SolidColor(Color(0xFF777381))) {
+            moveTo(12f, 12f)
+            curveTo(12.55f, 12f, 13.0208f, 11.8042f, 13.4125f, 11.4125f)
+            curveTo(13.8042f, 11.0208f, 14f, 10.55f, 14f, 10f)
+            curveTo(14f, 9.45f, 13.8042f, 8.97917f, 13.4125f, 8.5875f)
+            curveTo(13.0208f, 8.19583f, 12.55f, 8f, 12f, 8f)
+            curveTo(11.45f, 8f, 10.9792f, 8.19583f, 10.5875f, 8.5875f)
+            curveTo(10.1958f, 8.97917f, 10f, 9.45f, 10f, 10f)
+            curveTo(10f, 10.55f, 10.1958f, 11.0208f, 10.5875f, 11.4125f)
+            curveTo(10.9792f, 11.8042f, 11.45f, 12f, 12f, 12f)
+            close()
+            moveTo(11.3295f, 18.7225f)
+            curveTo(11.705f, 19.081f, 12.295f, 19.081f, 12.6705f, 18.7225f)
+            curveTo(14.3682f, 17.1015f, 15.653f, 15.6148f, 16.525f, 14.2625f)
+            curveTo(17.5083f, 12.7375f, 18f, 11.3833f, 18f, 10.2f)
+            curveTo(18f, 8.38333f, 17.4208f, 6.89583f, 16.2625f, 5.7375f)
+            curveTo(15.1042f, 4.57917f, 13.6833f, 4f, 12f, 4f)
+            curveTo(10.3167f, 4f, 8.89583f, 4.57917f, 7.7375f, 5.7375f)
+            curveTo(6.57917f, 6.89583f, 6f, 8.38333f, 6f, 10.2f)
+            curveTo(6f, 11.3833f, 6.49167f, 12.7375f, 7.475f, 14.2625f)
+            curveTo(8.34699f, 15.6148f, 9.63182f, 17.1015f, 11.3295f, 18.7225f)
+            close()
+            moveTo(12.6443f, 21.4435f)
+            curveTo(12.2755f, 21.767f, 11.7245f, 21.7669f, 11.3557f, 21.4435f)
+            curveTo(8.99363f, 19.3711f, 7.20422f, 17.4358f, 5.9875f, 15.6375f)
+            curveTo(4.6625f, 13.6792f, 4f, 11.8667f, 4f, 10.2f)
+            curveTo(4f, 7.7f, 4.80417f, 5.70833f, 6.4125f, 4.225f)
+            curveTo(8.02083f, 2.74167f, 9.88333f, 2f, 12f, 2f)
+            curveTo(14.1167f, 2f, 15.9792f, 2.74167f, 17.5875f, 4.225f)
+            curveTo(19.1958f, 5.70833f, 20f, 7.7f, 20f, 10.2f)
+            curveTo(20f, 11.8667f, 19.3375f, 13.6792f, 18.0125f, 15.6375f)
+            curveTo(16.7958f, 17.4358f, 15.0064f, 19.3711f, 12.6443f, 21.4435f)
+            close()
+        }
+    }.build()
 }
