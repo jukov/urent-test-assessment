@@ -66,8 +66,7 @@ public fun CitiesScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp),
+            .statusBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(32.dp))
@@ -76,7 +75,7 @@ public fun CitiesScreen(
         URentTextField(
             value = state.query,
             onValueChange = onQueryChanged,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             placeholder = {
                 Text(stringResource(R.string.cities_search_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
             },
@@ -179,7 +178,7 @@ private fun CityRow(city: CityUi, onClick: (Long) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick(city.id) }
-            .padding(vertical = 20.dp, horizontal = 4.dp),
+            .padding(vertical = 20.dp, horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -197,7 +196,7 @@ private fun CitiesSkeleton() {
         animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse),
         label = "cities-shimmer-alpha"
     )
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         repeat(SKELETON_ITEMS) { index ->
             Row(
                 Modifier.fillMaxWidth().height(76.dp),
