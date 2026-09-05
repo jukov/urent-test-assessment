@@ -1,5 +1,6 @@
 package info.jukov.urenttestassestment.feature.cities.presentation
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -11,6 +12,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -26,7 +28,18 @@ internal fun CitiesSnackbar(data: SnackbarData) {
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .fillMaxWidth()
             .heightIn(min = CITIES_SNACKBAR_MIN_HEIGHT),
-        dismissAction = {
+        shape = URentShapes.radius16,
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = data.visuals.message,
+                modifier = Modifier.weight(1f)
+            )
             IconButton(onClick = data::dismiss) {
                 Icon(
                     imageVector = URentIcons.Close,
@@ -34,13 +47,7 @@ internal fun CitiesSnackbar(data: SnackbarData) {
                     modifier = Modifier.size(CITIES_SNACKBAR_DISMISS_ICON_SIZE)
                 )
             }
-        },
-        shape = URentShapes.radius16,
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        dismissActionContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-    ) {
-        Text(data.visuals.message)
+        }
     }
 }
 
