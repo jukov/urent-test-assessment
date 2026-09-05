@@ -21,9 +21,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -81,7 +85,16 @@ internal fun CityNavigation(
 
 @Composable
 internal fun CityBottomBar(selectedTab: CityTab, onSelect: (CityTab) -> Unit) {
-    Surface(shadowElevation = 4.dp) {
+    Surface(
+        modifier = Modifier.dropShadow(
+            shape = RectangleShape,
+            shadow = Shadow(
+                radius = 8.dp,
+                color = Color.Black.copy(alpha = 0.16f),
+                offset = DpOffset(0.dp, -2.dp)
+            )
+        )
+    ) {
         Row(Modifier.fillMaxWidth().navigationBarsPadding().height(64.dp).selectableGroup()) {
             CityTab.entries.forEach { tab ->
                 val selected = tab == selectedTab
