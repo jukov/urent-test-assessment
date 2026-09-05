@@ -38,32 +38,32 @@ class MapMarkerDataTest {
     }
 
     @Test
-    fun `overlapping responses update by id and refresh recency without duplicates`() {
-        val other = city.copy(id = 8)
-        val updated = city.copy(name = "Updated")
-        val merged = mergeMapCities(listOf(city, other), listOf(other, updated, city.copy(id = 9)))
+    fun `replacement snapshot removes old pins and empty response clears the source`() {
+        val data = MapMarkerData()
+        data.update(listOf(city, city.copy(id = 8)))
 
-        assertEquals(listOf(other, updated, city.copy(id = 9)), merged)
+        val replacement = data.update(listOf(city.copy(id = 9)))!!
+        assertEquals(listOf("9"), replacement.features()!!.map { it.id() })
+        assertTrue(data.update(emptyList())!!.features()!!.isEmpty())
+        assertTrue(FeatureCollection.fromJson(data.json).features()!!.isEmpty())
     }
 
     @Test
-    fun `reordered repeated response and empty response keep the existing source snapshot`() {
-        val cached = listOf(city, city.copy(id = 8))
+    fun `reordered repeated response keeps the existing source snapshot`() {
+        val cities = listOf(city, city.copy(id = 8))
         val data = MapMarkerData()
-        val snapshot = data.update(cached)
+        val snapshot = data.update(cities)
 
-        assertNull(data.update(mergeMapCities(cached, cached.reversed())))
-        assertNull(data.update(mergeMapCities(cached, emptyList())))
+        assertNull(data.update(cities.reversed()))
         assertSame(snapshot, data.features)
     }
 
     @Test
-    fun `Moscow gets collision priority over Khimki regardless of which city was cached first`() {
+    fun `Moscow gets collision priority over Khimki regardless of response order`() {
         val khimki = city.copy(id = 8, name = "Khimki", population = 239_967)
-        listOf(city to khimki, khimki to city).forEach { (cached, loaded) ->
+        listOf(city to khimki, khimki to city).forEach { (first, second) ->
             val data = MapMarkerData()
-            data.update(listOf(cached))
-            val features = nativePlacementOrder(data.update(mergeMapCities(listOf(cached), listOf(loaded)))!!)
+            val features = nativePlacementOrder(data.update(listOf(first, second))!!)
 
             assertEquals(listOf("Moscow", "Khimki"), features.map { it.getStringProperty("name") })
             // MapLibre places lower sort keys first when overlap is disabled.
@@ -72,13 +72,13 @@ class MapMarkerDataTest {
     }
 
     @Test
-    fun `fresh population changes recompute cached priorities while retaining stable ids`() {
+    fun `fresh population changes recompute priorities while retaining stable ids`() {
         val other = city.copy(id = 8, population = 100)
         val data = MapMarkerData()
-        val cached = listOf(city, other)
-        data.update(cached)
+        val cities = listOf(city, other)
+        data.update(cities)
         val updated = other.copy(population = 20_000_000)
-        val features = nativePlacementOrder(data.update(mergeMapCities(cached, listOf(updated)))!!)
+        val features = nativePlacementOrder(data.update(listOf(city, updated))!!)
 
         assertEquals(listOf("8", "7"), features.map { it.id() })
         assertEquals(listOf(-14, -13), features.map { it.getNumberProperty(POPULATION_PRIORITY).toInt() })

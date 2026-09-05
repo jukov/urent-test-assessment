@@ -125,7 +125,7 @@ class MapViewModelTest {
         vm.retry()
         runCurrent()
         assertEquals(3, calls)
-        assertEquals(listOf(1L, 3L), vm.container.stateFlow.value.cities.map(MapCityUi::id))
+        assertEquals(listOf(3L), vm.container.stateFlow.value.cities.map(MapCityUi::id))
     }
 
     @Test
@@ -148,48 +148,46 @@ class MapViewModelTest {
     }
 
     @Test
-    fun `known pins survive loading and return to a previous viewport`() = runTest(dispatcher) {
-        val second = CompletableDeferred<MapResult>()
-        val returning = CompletableDeferred<MapResult>()
-        val requests = mutableListOf<MapViewport>()
+    fun `new batch replaces previous cities and updates overlapping cities`() = runTest(dispatcher) {
+        val next = CompletableDeferred<MapResult>()
+        var calls = 0
         val vm = viewModel {
-            requests += it
-            when (requests.size) {
-                1 -> success(1)
-                2 -> second.await()
-                else -> returning.await()
+            if (++calls == 1) {
+                MapResult.Success(
+                    listOf(City(1, "Moscow", "RU", 100, 55.75, 37.62), City(2, "Paris", "FR", 200, 48.85, 2.35))
+                )
+            } else {
+                next.await()
             }
         }
         vm.onCameraIdle(camera, viewport)
         advanceUntilIdle()
-        val known = vm.container.stateFlow.value.cities
+        val previous = vm.container.stateFlow.value.cities
+        assertEquals(listOf(1L, 2L), previous.map(MapCityUi::id))
 
         vm.onCameraIdle(camera, viewport.copy(radius = 30000))
-        assertEquals(known, vm.container.stateFlow.value.cities)
+        advanceUntilIdle()
         assertEquals(MapLoadState.Loading, vm.container.stateFlow.value.loadState)
-        advanceTimeBy(299)
-        runCurrent()
-        assertEquals(1, requests.size)
-        assertEquals(known, vm.container.stateFlow.value.cities)
-        advanceTimeBy(1)
-        runCurrent()
-        assertEquals(known, vm.container.stateFlow.value.cities)
-        second.complete(success(2))
+        assertEquals(previous, vm.container.stateFlow.value.cities)
+        next.complete(
+            MapResult.Success(
+                listOf(City(2, "Updated Paris", "FR", 300, 48.86, 2.36), City(3, "London", "GB", 400, 51.5, -0.12))
+            )
+        )
         advanceUntilIdle()
-        assertEquals(listOf(1L, 2L), vm.container.stateFlow.value.cities.map(MapCityUi::id))
 
-        vm.onCameraIdle(camera, viewport)
-        advanceTimeBy(300)
-        runCurrent()
-        assertEquals(listOf(viewport, viewport.copy(radius = 30000), viewport), requests)
-        assertEquals(listOf(1L, 2L), vm.container.stateFlow.value.cities.map(MapCityUi::id))
-        returning.complete(success(1))
-        advanceUntilIdle()
-        assertEquals(listOf(2L, 1L), vm.container.stateFlow.value.cities.map(MapCityUi::id))
+        assertEquals(
+            listOf(
+                MapCityUi(2, "Updated Paris", 48.86, 2.36, 300, "FR"),
+                MapCityUi(3, "London", 51.5, -0.12, 400, "GB")
+            ),
+            vm.container.stateFlow.value.cities
+        )
+        assertEquals(MapLoadState.Content, vm.container.stateFlow.value.loadState)
     }
 
     @Test
-    fun `fresh responses update cached city data without duplicating pins`() = runTest(dispatcher) {
+    fun `fresh responses update city data and selected details`() = runTest(dispatcher) {
         var calls = 0
         val vm = viewModel {
             calls++
@@ -212,7 +210,7 @@ class MapViewModelTest {
     }
 
     @Test
-    fun `empty viewport result preserves pins cached from earlier areas`() = runTest(dispatcher) {
+    fun `empty viewport result removes pins from the previous response`() = runTest(dispatcher) {
         var calls = 0
         val vm = viewModel {
             calls++
@@ -220,12 +218,12 @@ class MapViewModelTest {
         }
         vm.onCameraIdle(camera, viewport)
         advanceUntilIdle()
-        val cached = vm.container.stateFlow.value.cities
+        vm.selectCity(1)
         vm.onCameraIdle(camera, viewport.copy(center = Coordinate(0.0, 0.0)))
         advanceUntilIdle()
 
         assertEquals(MapLoadState.Empty, vm.container.stateFlow.value.loadState)
-        assertEquals(cached, vm.container.stateFlow.value.cities)
+        assertEquals(emptyList<MapCityUi>(), vm.container.stateFlow.value.cities)
     }
 
     @Test

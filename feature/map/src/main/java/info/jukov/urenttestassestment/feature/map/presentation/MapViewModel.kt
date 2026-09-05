@@ -89,18 +89,15 @@ public class MapViewModel(
         request = viewModelScope.launch {
             if (debounce) delay(VIEWPORT_DEBOUNCE_MILLIS)
             val result = repository.cities(viewport)
-            val cached = container.stateFlow.value.cities
+            val previous = container.stateFlow.value.cities
             val cities = if (result is MapResult.Success) {
                 withContext(workerDispatcher) {
-                    mergeMapCities(
-                        cached,
-                        result.cities.map {
-                            MapCityUi(it.id, it.name, it.latitude, it.longitude, it.population, it.countryCode)
-                        }
-                    )
+                    result.cities.map {
+                        MapCityUi(it.id, it.name, it.latitude, it.longitude, it.population, it.countryCode)
+                    }
                 }
             } else {
-                cached
+                previous
             }
             blockingIntent {
                 if (expected != generation) return@blockingIntent
