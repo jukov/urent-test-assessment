@@ -1,0 +1,17 @@
+config:
+  validation: true
+  warningsAsErrors: true
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+
+complexity:
+  LongParameterList:
+    # Compose screens expose state and callbacks as explicit parameters.
+    ignoreAnnotated: ['Composable']
+
+style:
+  MagicNumber:
+    # Theme tokens are named properties initialized with numeric values.
+    ignorePropertyDeclaration: true
