@@ -1,0 +1,10 @@
+<resources>
+    <string name="city_label">Город</string>
+    <string name="city_country_label">Страна</string>
+    <string name="city_population_label">Население</string>
+    <string name="city_population_value">%1$s чел</string>
+    <string name="city_search">Поиск информации о городе</string>
+    <string name="city_browser_unavailable">На устройстве нет доступного браузера</string>
+    <string name="city_details_title">Информация о городе</string>
+    <string name="city_back">Назад</string>
+</resources>

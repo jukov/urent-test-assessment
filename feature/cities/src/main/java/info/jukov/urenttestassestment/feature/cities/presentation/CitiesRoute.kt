@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import info.jukov.urenttestassestment.core.ui.city.CityDetails
 import info.jukov.urenttestassestment.feature.cities.R
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesError
 import org.koin.androidx.compose.koinViewModel
@@ -17,14 +18,14 @@ import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
 @Composable
-public fun CitiesRoute(onOpenCity: (Long) -> Unit = {}, viewModel: CitiesViewModel = koinViewModel()) {
+public fun CitiesRoute(onOpenCity: (CityDetails) -> Unit, viewModel: CitiesViewModel = koinViewModel()) {
     val state = viewModel.collectAsState().value
     val snackbarHostState = remember { SnackbarHostState() }
     val networkError = stringResource(R.string.cities_error_network)
     val genericError = stringResource(R.string.cities_error_generic)
     viewModel.collectSideEffect { effect ->
         when (effect) {
-            is CitiesSideEffect.OpenCity -> onOpenCity(effect.cityId)
+            is CitiesSideEffect.OpenCity -> onOpenCity(effect.city)
 
             is CitiesSideEffect.ShowRefreshFailure -> snackbarHostState.showSnackbar(
                 if (effect.error == CitiesError.Network) networkError else genericError

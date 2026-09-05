@@ -23,13 +23,17 @@ import org.maplibre.android.maps.MapView
 internal fun MapSurface(
     cities: List<MapCityUi>,
     camera: MapCamera,
-    onIdle: (MapCamera, MapViewport) -> Unit,
+    onIdle: (MapCamera, MapViewport?) -> Unit,
     onController: (MapController?) -> Unit,
     onStyleError: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectedCityId: Long? = null,
+    selectedColor: Int = 0,
+    onSelectCity: (Long?) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val currentSelection by rememberUpdatedState(onSelectCity)
     val currentIdle by rememberUpdatedState(onIdle)
     val currentError by rememberUpdatedState(onStyleError)
     val currentController by rememberUpdatedState(onController)
@@ -55,19 +59,14 @@ internal fun MapSurface(
         mapView.addOnLayoutChangeListener(layoutListener)
         val failure = MapView.OnDidFailLoadingMapListener { currentError(true) }
         mapView.addOnDidFailLoadingMapListener(failure)
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
-                else -> Unit
-            }
-        }
+        val observer = mapView.lifecycleObserver()
         lifecycle.addObserver(observer)
         mapView.getMapAsync { map ->
             if (disposed) return@getMapAsync
-            controller = MapController(map, camera, { c, v -> currentIdle(c, v) }, { currentError(it) })
+            controller =
+                MapController(map, camera, { c, v ->
+                    currentIdle(c, v)
+                }, { currentError(it) }, { currentSelection(it) }, selectedColor)
             currentController(controller)
         }
         onDispose {
@@ -82,11 +81,24 @@ internal fun MapSurface(
             mapView.onDestroy()
         }
     }
-    AndroidView(factory = { mapView }, modifier = modifier, update = { controller?.update(cities) })
+    AndroidView(factory = { mapView }, modifier = modifier, update = {
+        controller?.update(cities)
+        controller?.select(selectedCityId)
+    })
 }
 
 private fun createMapView(context: Context): MapView {
     MapLibre.getInstance(context)
     MarkerFontHttp.configure(context)
     return MapView(context).apply { onCreate(null) }
+}
+
+private fun MapView.lifecycleObserver() = LifecycleEventObserver { _, event ->
+    when (event) {
+        Lifecycle.Event.ON_START -> onStart()
+        Lifecycle.Event.ON_RESUME -> onResume()
+        Lifecycle.Event.ON_PAUSE -> onPause()
+        Lifecycle.Event.ON_STOP -> onStop()
+        else -> Unit
+    }
 }

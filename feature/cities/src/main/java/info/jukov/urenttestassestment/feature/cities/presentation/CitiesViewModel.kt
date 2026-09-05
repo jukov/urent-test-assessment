@@ -7,6 +7,8 @@ import info.jukov.urenttestassestment.core.model.City
 import info.jukov.urenttestassestment.core.pagination.PaginationEffect
 import info.jukov.urenttestassestment.core.pagination.PaginationState
 import info.jukov.urenttestassestment.core.pagination.PaginationStateMachine
+import info.jukov.urenttestassestment.core.ui.city.CityDetails
+import info.jukov.urenttestassestment.core.ui.city.CountryNameFormatter
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesError
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesRepository
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesResult
@@ -77,7 +79,10 @@ public class CitiesViewModel(
         }
     }
 
-    public fun onCityClick(id: Long) = intent { postSideEffect(CitiesSideEffect.OpenCity(id)) }
+    public fun onCityClick(id: Long) = intent {
+        val city = pagination.state.cityItems().firstOrNull { it.id == id } ?: return@intent
+        postSideEffect(CitiesSideEffect.OpenCity(CityDetails(city.id, city.name, city.countryCode, city.population)))
+    }
 
     private fun loadInitial(query: String) {
         debounceJob?.cancel()
@@ -156,3 +161,12 @@ private fun City.toUi(formatter: CountryNameFormatter) = CityUi(id, "$name, ${fo
 private fun Throwable.toCitiesError(): CitiesError = (this as? CitiesRequestException)?.error ?: CitiesError.Unknown
 
 private class CitiesRequestException(val error: CitiesError) : RuntimeException(error.toString())
+
+private fun PaginationState<City>.cityItems(): List<City> = when (this) {
+    is PaginationState.Content -> items
+    is PaginationState.ContentProgress -> items
+    is PaginationState.ContentFailure -> items
+    is PaginationState.ContentRefreshing -> items
+    is PaginationState.ContentEndReached -> items
+    else -> emptyList()
+}

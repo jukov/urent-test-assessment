@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
     implementation(libs.orbit.compose)
