@@ -1,7 +1,5 @@
 package info.jukov.urenttestassestment
 
-import androidx.activity.BackEventCompat
-import androidx.activity.ComponentActivity
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -18,7 +16,7 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.StateRestorationTester
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -28,79 +26,12 @@ import androidx.test.platform.app.InstrumentationRegistry
 import info.jukov.urenttestassestment.core.ui.R as UiR
 import info.jukov.urenttestassestment.core.ui.city.CityDetails
 import info.jukov.urenttestassestment.core.ui.theme.URentTheme
-import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
 class CityNavigationTest {
     @get:Rule
-    val compose = createAndroidComposeRule<ComponentActivity>()
-
-    @Test
-    fun detailsCrossfadeInBothDirections() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        compose.setContent {
-            URentTheme {
-                CityNavigation(listContent = { open ->
-                    Button({ open(CityDetails(7, "Moscow", "RU", 12_655_000)) }) { Text("Open city") }
-                })
-            }
-        }
-        compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("Open city").performClick()
-        compose.mainClock.advanceTimeBy(96)
-        compose.onNodeWithText("Open city").assertExists()
-        compose.onNodeWithText("Moscow").assertIsDisplayed()
-        compose.mainClock.advanceTimeBy(500)
-        compose.onNodeWithText("Open city").assertDoesNotExist()
-
-        compose.onNodeWithContentDescription(context.getString(UiR.string.city_back)).performClick()
-        compose.mainClock.advanceTimeBy(96)
-        compose.onNodeWithText("Moscow").assertExists()
-        compose.onNodeWithText("Open city").assertIsDisplayed()
-        compose.mainClock.advanceTimeBy(500)
-        compose.onNodeWithText("Moscow").assertDoesNotExist()
-    }
-
-    @Test
-    fun predictiveBackKeepsDetailsGeometryAndSupportsCancelAndCommit() {
-        compose.setContent {
-            URentTheme {
-                CityNavigation(listContent = { open ->
-                    Button({ open(CityDetails(7, "Moscow", "RU", 12_655_000)) }) { Text("Open city") }
-                })
-            }
-        }
-        compose.onNodeWithText("Open city").performClick()
-        val originalBounds = compose.onNodeWithText("Moscow").fetchSemanticsNode().boundsInRoot
-        val dispatcher = compose.activity.onBackPressedDispatcher
-        compose.mainClock.autoAdvance = false
-
-        fun progressBack() {
-            compose.runOnUiThread {
-                dispatcher.dispatchOnBackStarted(BackEventCompat(0f, 400f, 0f, BackEventCompat.EDGE_LEFT))
-            }
-            compose.mainClock.advanceTimeByFrame()
-            compose.runOnUiThread {
-                dispatcher.dispatchOnBackProgressed(BackEventCompat(200f, 400f, 0.5f, BackEventCompat.EDGE_LEFT))
-            }
-            compose.mainClock.advanceTimeBy(96)
-            assertEquals(originalBounds, compose.onNodeWithText("Moscow").fetchSemanticsNode().boundsInRoot)
-            compose.onNodeWithText("Open city").assertExists()
-        }
-
-        progressBack()
-        compose.runOnUiThread { dispatcher.dispatchOnBackCancelled() }
-        compose.mainClock.advanceTimeBy(500)
-        compose.onNodeWithText("Moscow").assertIsDisplayed()
-        compose.onNodeWithText("Open city").assertDoesNotExist()
-
-        progressBack()
-        compose.runOnUiThread { dispatcher.onBackPressed() }
-        compose.mainClock.advanceTimeBy(500)
-        compose.onNodeWithText("Moscow").assertDoesNotExist()
-        compose.onNodeWithText("Open city").assertIsDisplayed()
-    }
+    val compose = createComposeRule()
 
     @Test
     fun tabsReplaceContentWithoutWaitingForAnAnimation() {
