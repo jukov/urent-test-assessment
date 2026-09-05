@@ -1,7 +1,11 @@
 package info.jukov.urenttestassestment
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -31,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -92,10 +97,12 @@ internal fun CityNavigation(
             navController,
             startDestination = CityListDestination,
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
+            enterTransition = { cityEnterTransition() },
+            exitTransition = { cityExitTransition() },
+            popEnterTransition = { cityEnterTransition() },
+            popExitTransition = { cityExitTransition() },
+            predictivePopEnterTransition = { cityEnterTransition() },
+            predictivePopExitTransition = { cityExitTransition() }
         ) {
             composable<CityListDestination> {
                 listContent { city ->
@@ -165,3 +172,15 @@ internal fun CityBottomBar(selectedTab: CityTab, onSelect: (CityTab) -> Unit) {
         }
     }
 }
+
+private const val CITY_TRANSITION_DURATION_MILLIS = 220
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.involvesCityDetails(): Boolean =
+    initialState.destination.hasRoute<CityDetailsDestination>() ||
+        targetState.destination.hasRoute<CityDetailsDestination>()
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.cityEnterTransition(): EnterTransition =
+    if (involvesCityDetails()) fadeIn(tween(CITY_TRANSITION_DURATION_MILLIS)) else EnterTransition.None
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.cityExitTransition(): ExitTransition =
+    if (involvesCityDetails()) fadeOut(tween(CITY_TRANSITION_DURATION_MILLIS)) else ExitTransition.None
