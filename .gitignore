@@ -3,7 +3,8 @@
 *.iml
 
 # Gradle
-/.gradle/
+**/.gradle/
+**/.kotlin/
 **/build/
 
 # Local Android configuration
