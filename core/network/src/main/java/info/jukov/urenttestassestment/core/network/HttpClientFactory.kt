@@ -1,18 +1,17 @@
 package info.jukov.urenttestassestment.core.network
 
+import info.jukov.urenttestassestment.core.logging.AppLogger
+import info.jukov.urenttestassestment.core.logging.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.accept
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -22,8 +21,14 @@ public fun createHttpClient(config: NetworkConfig = NetworkConfig(), debugLoggin
 public fun createHttpClient(
     engine: HttpClientEngine,
     config: NetworkConfig = NetworkConfig(),
-    debugLogging: Boolean = false,
-    logger: Logger = Logger.DEFAULT
+    debugLogging: Boolean = false
+): HttpClient = createHttpClient(engine, config, debugLogging, AppLogger)
+
+internal fun createHttpClient(
+    engine: HttpClientEngine,
+    config: NetworkConfig,
+    debugLogging: Boolean,
+    logger: Logger
 ): HttpClient = HttpClient(engine) {
     expectSuccess = true
 
@@ -45,34 +50,16 @@ public fun createHttpClient(
     }
     if (debugLogging) {
         install(Logging) {
-            this.logger = RedactingLogger(logger)
-            level = LogLevel.HEADERS
-            sanitizeHeader { header -> isSensitiveHeader(header) }
+            this.logger = KtorLoggerAdapter(logger.withTag(NETWORK_LOG_TAG))
+            level = LogLevel.ALL
         }
     }
 }
 
-private fun isSensitiveHeader(header: String): Boolean = header.lowercase() in SENSITIVE_HEADERS
-
-private val SENSITIVE_HEADERS = setOf(
-    HttpHeaders.Authorization.lowercase(),
-    HttpHeaders.Cookie.lowercase(),
-    HttpHeaders.ProxyAuthorization.lowercase(),
-    HttpHeaders.SetCookie.lowercase(),
-    "api-key",
-    "x-api-key"
-)
-
-private class RedactingLogger(private val delegate: Logger) : Logger {
+private class KtorLoggerAdapter(private val logger: Logger) : io.ktor.client.plugins.logging.Logger {
     override fun log(message: String) {
-        delegate.log(
-            URL_WITH_QUERY.replace(message) { result ->
-                result.groupValues[1] + "?<redacted>"
-            }
-        )
-    }
-
-    private companion object {
-        val URL_WITH_QUERY: Regex = """(https?://[^?\s]+)\?[^\s]+""".toRegex()
+        logger.debug(message)
     }
 }
+
+private const val NETWORK_LOG_TAG = "Ktor"

@@ -1,21 +1,24 @@
 package info.jukov.urenttestassestment.core.network
 
+import info.jukov.urenttestassestment.core.logging.Logger
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.pluginOrNull
 import io.ktor.client.request.get
-import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HttpClientFactoryTest {
@@ -56,35 +59,53 @@ class HttpClientFactoryTest {
     }
 
     @Test
-    fun `redacts query and does not log response body`() = runTest {
-        val messages = mutableListOf<String>()
+    fun `debug logger includes query and request and response bodies`() = runTest {
+        val logger = RecordingLogger()
         val client = createHttpClient(
             engine = MockEngine {
                 respond(
-                    content = "sensitive response body",
-                    headers = headersOf(
-                        HttpHeaders.ContentType to listOf("text/plain"),
-                        HttpHeaders.SetCookie to listOf("session=response-secret")
-                    )
+                    content = "response body",
+                    headers = headersOf(HttpHeaders.ContentType, "text/plain")
                 )
             },
+            config = NetworkConfig(),
             debugLogging = true,
-            logger = object : Logger {
-                override fun log(message: String) {
-                    messages += message
-                }
-            }
+            logger = logger
         )
 
-        client.get("api/cities?query=secret") {
-            header("X-Api-Key", "request-secret")
+        client.post("api/cities?query=Tomsk") {
+            contentType(ContentType.Application.Json)
+            setBody("request body")
         }.bodyAsText()
 
-        val log = messages.joinToString("\n")
-        assertFalse(log.contains("query=secret"))
-        assertFalse(log.contains("sensitive response body"))
-        assertFalse(log.contains("request-secret"))
-        assertFalse(log.contains("response-secret"))
+        val log = logger.messages.joinToString("\n")
+        assertEquals("Ktor", logger.tag)
+        assertTrue(log.contains("query=Tomsk"))
+        assertTrue(log.contains("request body"))
+        assertTrue(log.contains("response body"))
         client.close()
+    }
+
+    private class RecordingLogger : Logger {
+        val messages = mutableListOf<String>()
+        var tag: String? = null
+
+        override fun verbose(message: String, vararg args: Any?) = Unit
+
+        override fun debug(message: String, vararg args: Any?) {
+            messages += message
+        }
+
+        override fun info(message: String, vararg args: Any?) = Unit
+
+        override fun warn(message: String, vararg args: Any?) = Unit
+
+        override fun warn(throwable: Throwable, message: String, vararg args: Any?) = Unit
+
+        override fun error(message: String, vararg args: Any?) = Unit
+
+        override fun error(throwable: Throwable, message: String, vararg args: Any?) = Unit
+
+        override fun withTag(tag: String): Logger = apply { this.tag = tag }
     }
 }

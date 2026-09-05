@@ -12,6 +12,9 @@ complexity:
     ignoreAnnotated: ['Composable']
 
 style:
+  ForbiddenImport:
+    forbiddenImports:
+      - 'android.util.Log'
   MagicNumber:
     # Theme tokens are named properties initialized with numeric values.
     ignorePropertyDeclaration: true

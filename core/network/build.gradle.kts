@@ -1,25 +1,10 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id("urent.android.library")
     alias(libs.plugins.kotlin.serialization)
-    id("urent.quality")
-    id("urent.testing")
 }
 
 android {
     namespace = "info.jukov.urenttestassestment.core.network"
-    compileSdk {
-        version = release(37)
-    }
-
-    defaultConfig {
-        minSdk = 28
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
     buildFeatures {
         buildConfig = true
     }
@@ -27,6 +12,7 @@ android {
 
 dependencies {
     api(libs.ktor.client.core)
+    implementation(project(":core:logging"))
     implementation(libs.koin.core)
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.content.negotiation)
