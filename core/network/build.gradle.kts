@@ -11,10 +11,11 @@ android {
 }
 
 dependencies {
+    testImplementation(libs.okhttp.mockwebserver)
     api(libs.ktor.client.core)
     implementation(project(":core:logging"))
     implementation(libs.koin.core)
-    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.logging)
     implementation(libs.ktor.serialization.kotlinx.json)
