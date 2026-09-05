@@ -1,6 +1,7 @@
 package info.jukov.urenttestassestment.feature.cities.presentation
 
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -18,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -45,9 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import info.jukov.urenttestassestment.core.ui.component.URentTextField
 import info.jukov.urenttestassestment.core.ui.icon.Pin
-import info.jukov.urenttestassestment.core.ui.icon.Search
 import info.jukov.urenttestassestment.core.ui.icon.URentIcons
 import info.jukov.urenttestassestment.core.ui.theme.URentTheme
 import info.jukov.urenttestassestment.feature.cities.R
@@ -62,28 +60,28 @@ public fun CitiesScreen(
     onCityClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val listState = rememberLazyListState()
+    val isListScrolled by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
+    }
+    val headerElevation by animateDpAsState(
+        targetValue = headerElevationFor(isListScrolled),
+        label = "cities-header-elevation"
+    )
+    LaunchedEffect(state.content) {
+        if (state.content is CitiesContentState.EmptyProgress) listState.scrollToItem(0)
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding(),
+            .background(MaterialTheme.colorScheme.background),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(32.dp))
-        Text(stringResource(R.string.cities_title), style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(28.dp))
-        URentTextField(
-            value = state.query,
-            onValueChange = onQueryChanged,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            placeholder = {
-                Text(stringResource(R.string.cities_search_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            trailingIcon = {
-                Icon(URentIcons.Search, contentDescription = stringResource(R.string.cities_search_description))
-            }
+        CitiesHeader(
+            query = state.query,
+            elevation = headerElevation,
+            onQueryChanged = onQueryChanged
         )
-        Spacer(Modifier.height(16.dp))
         when (val content = state.content) {
             CitiesContentState.EmptyProgress -> CitiesSkeleton()
 
@@ -100,7 +98,8 @@ public fun CitiesScreen(
                 onLoadNextPage,
                 onRefresh,
                 onRetry,
-                onCityClick
+                onCityClick,
+                listState
             )
         }
     }
@@ -112,10 +111,10 @@ private fun CitiesList(
     onLoadNextPage: () -> Unit,
     onRefresh: () -> Unit,
     onRetry: () -> Unit,
-    onCityClick: (Long) -> Unit
+    onCityClick: (Long) -> Unit,
+    listState: LazyListState
 ) {
     val cities = content.cities()
-    val listState = rememberLazyListState()
     val shouldLoadMore by remember(cities.size) {
         derivedStateOf {
             val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
