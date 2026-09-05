@@ -3,6 +3,7 @@ package info.jukov.urenttestassestment.feature.map.presentation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.maplibre.android.maps.ImageStretches
 
 class MarkerBubbleTest {
     @Test
@@ -14,38 +15,73 @@ class MarkerBubbleTest {
     }
 
     @Test
-    fun `stretch regions exclude the full corner arcs on both sides`() {
-        val stretch = MarkerBubbleShape.stretches.single()
-
-        assertTrue(stretch.first >= MarkerBubbleShape.CORNER_RADIUS_PX)
-        assertTrue(stretch.second <= MarkerBubbleShape.SIZE_PX - MarkerBubbleShape.CORNER_RADIUS_PX)
-        assertTrue(stretch.first < stretch.second)
+    fun `stretch regions exclude full corners and pointer on both axes`() {
+        MarkerBubbleShape.stretchesX.forEach { stretch ->
+            assertTrue(stretch.first >= MarkerBubbleShape.CORNER_RADIUS_PX)
+            assertTrue(stretch.second <= MarkerBubbleShape.WIDTH_PX - MarkerBubbleShape.CORNER_RADIUS_PX)
+            assertTrue(stretch.first < stretch.second)
+            assertTrue(
+                stretch.second <= MarkerBubbleShape.CENTER_X_PX - MarkerBubbleShape.POINTER_HALF_WIDTH_PX ||
+                    stretch.first >= MarkerBubbleShape.CENTER_X_PX + MarkerBubbleShape.POINTER_HALF_WIDTH_PX
+            )
+        }
+        val vertical = MarkerBubbleShape.stretchesY.single()
+        assertTrue(vertical.first >= MarkerBubbleShape.CORNER_RADIUS_PX)
+        assertTrue(vertical.second <= MarkerBubbleShape.BODY_HEIGHT_PX - MarkerBubbleShape.CORNER_RADIUS_PX)
+        assertTrue(vertical.first < vertical.second)
     }
 
     @Test
-    fun `short long and multiline labels keep the same corner dimensions`() {
-        val pixelRatio = MarkerBubbleShape.DENSITY_DPI / 160f
-        // Target extents in dp represent short/long labels and one/two text lines.
-        listOf(28f, 40f, 100f, 180f).forEach { targetDp ->
-            val targetPx = targetDp * pixelRatio
+    fun `short and long labels preserve corners and a centered fixed width pointer`() {
+        val ratio = MarkerBubbleShape.PIXEL_RATIO
+        listOf(28f, 40f, 100f, 180f).forEach { widthDp ->
+            val widthPx = widthDp * ratio
+            fun mapped(x: Float) = stretchedCoordinate(
+                x,
+                widthPx - MarkerBubbleShape.WIDTH_PX,
+                MarkerBubbleShape.stretchesX
+            )
             val radius = MarkerBubbleShape.CORNER_RADIUS_PX
-            assertEquals(8f, stretchedCoordinate(radius, targetPx) / pixelRatio, 0f)
+            val center = MarkerBubbleShape.CENTER_X_PX
+            val halfPointer = MarkerBubbleShape.POINTER_HALF_WIDTH_PX
+            assertEquals(8f, mapped(radius) / ratio, 0f)
+            assertEquals(8f, (widthPx - mapped(MarkerBubbleShape.WIDTH_PX - radius)) / ratio, 0f)
+            assertEquals(widthPx / 2, mapped(center), 0f)
+            assertEquals(halfPointer * 2, mapped(center + halfPointer) - mapped(center - halfPointer), 0f)
+        }
+    }
+
+    @Test
+    fun `pointer tip remains at coordinate for one and multiple text lines`() {
+        val body = MarkerBubbleShape.content.contentArray
+        assertEquals(MarkerBubbleShape.BODY_HEIGHT_PX.toFloat(), body[3], 0f)
+        assertEquals("bottom", MarkerLabelLayout.TEXT_ANCHOR)
+        val ratio = MarkerBubbleShape.PIXEL_RATIO
+        listOf(12f, 28f, 44f).forEach { textHeight ->
+            val textBottom = MarkerLabelLayout.textOffset[1] * MarkerLabelLayout.TEXT_SIZE
+            val bodyTop = textBottom - textHeight - MarkerLabelLayout.padding[0]
+            val bodyHeight = textHeight + MarkerLabelLayout.padding[0] + MarkerLabelLayout.padding[2]
+            val extra = bodyHeight * ratio - body[3]
+            val tip = stretchedCoordinate(
+                MarkerBubbleShape.HEIGHT_PX.toFloat(),
+                extra,
+                MarkerBubbleShape.stretchesY
+            )
+            assertEquals(0f, bodyTop + tip / ratio, 0.00001f)
             assertEquals(
-                8f,
-                (targetPx - stretchedCoordinate(MarkerBubbleShape.SIZE_PX - radius, targetPx)) / pixelRatio,
+                MarkerBubbleShape.POINTER_HEIGHT_PX,
+                tip - stretchedCoordinate(body[3], extra, MarkerBubbleShape.stretchesY),
                 0f
             )
         }
     }
 
-    // Nine-slice mapping: only the registered interval absorbs the change in label size.
-    private fun stretchedCoordinate(position: Float, targetSize: Float): Float {
-        val stretch = MarkerBubbleShape.stretches.single()
-        val extra = targetSize - MarkerBubbleShape.SIZE_PX
-        return when {
-            position <= stretch.first -> position
-            position >= stretch.second -> position + extra
-            else -> position + extra * (position - stretch.first) / (stretch.second - stretch.first)
-        }
+    // Each stretch interval absorbs its proportional share; all other pixels stay fixed.
+    private fun stretchedCoordinate(position: Float, extra: Float, stretches: List<ImageStretches>): Float {
+        val length = stretches.sumOf { (it.second - it.first).toDouble() }.toFloat()
+        val before = stretches.sumOf {
+            (position - it.first).coerceIn(0f, it.second - it.first).toDouble()
+        }.toFloat()
+        return position + extra * before / length
     }
 }

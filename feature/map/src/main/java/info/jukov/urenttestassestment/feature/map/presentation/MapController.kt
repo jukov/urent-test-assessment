@@ -13,10 +13,12 @@ import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory.iconImage
 import org.maplibre.android.style.layers.PropertyFactory.iconTextFit
 import org.maplibre.android.style.layers.PropertyFactory.iconTextFitPadding
+import org.maplibre.android.style.layers.PropertyFactory.textAnchor
 import org.maplibre.android.style.layers.PropertyFactory.textColor
 import org.maplibre.android.style.layers.PropertyFactory.textField
 import org.maplibre.android.style.layers.PropertyFactory.textFont
 import org.maplibre.android.style.layers.PropertyFactory.textMaxWidth
+import org.maplibre.android.style.layers.PropertyFactory.textOffset
 import org.maplibre.android.style.layers.PropertyFactory.textSize
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
@@ -51,18 +53,20 @@ internal class MapController(
             style.addImage(
                 BUBBLE_IMAGE,
                 markerBubble(),
-                MarkerBubbleShape.stretches,
-                MarkerBubbleShape.stretches,
-                null
+                MarkerBubbleShape.stretchesX,
+                MarkerBubbleShape.stretchesY,
+                MarkerBubbleShape.content
             )
             style.addSource(GeoJsonSource(CITIES_SOURCE, features(cities)))
             style.addLayer(
                 SymbolLayer(CITIES_LAYER, CITIES_SOURCE).withProperties(
                     iconImage(BUBBLE_IMAGE),
                     iconTextFit(Property.ICON_TEXT_FIT_BOTH),
-                    iconTextFitPadding(LABEL_PADDING),
+                    iconTextFitPadding(MarkerLabelLayout.padding),
                     textField(get("name")),
-                    textSize(LABEL_TEXT_SIZE),
+                    textSize(MarkerLabelLayout.TEXT_SIZE),
+                    textAnchor(MarkerLabelLayout.TEXT_ANCHOR),
+                    textOffset(MarkerLabelLayout.textOffset),
                     textColor(Color.WHITE),
                     textFont(arrayOf("Noto Sans Regular")),
                     textMaxWidth(LABEL_MAX_WIDTH)
@@ -118,6 +122,4 @@ private const val CITIES_SOURCE = "urent-cities"
 private const val CITIES_LAYER = "urent-city-labels"
 private const val BUBBLE_IMAGE = "urent-city-bubble"
 
-private val LABEL_PADDING = arrayOf(8f, 10f, 8f, 10f)
-private const val LABEL_TEXT_SIZE = 12f
 private const val LABEL_MAX_WIDTH = 12f
