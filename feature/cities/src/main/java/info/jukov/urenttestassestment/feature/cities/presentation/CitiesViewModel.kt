@@ -31,15 +31,15 @@ public class CitiesViewModel(
     private var debounceJob: Job? = null
     private var requestJob: Job? = null
     private var generation = 0
-    private var activeQuery: String = initialQuery.trim()
-    private var latestQuery: String = initialQuery
+    private var appliedQuery: String = initialQuery.trim()
+    private var inputQuery: String = initialQuery
 
     init {
-        loadInitial(activeQuery)
+        loadInitial(appliedQuery)
     }
 
     public fun onQueryChanged(value: String) {
-        latestQuery = value
+        inputQuery = value
         savedStateHandle[QUERY_KEY] = value
         blockingIntent { reduce { state.copy(query = value) } }
         debounceJob?.cancel()
@@ -47,31 +47,31 @@ public class CitiesViewModel(
             delay(SEARCH_DEBOUNCE_MILLIS)
             debounceJob = null
             val normalized = value.trim()
-            if (normalized != activeQuery) loadInitial(normalized)
+            if (normalized != appliedQuery) loadInitial(normalized)
         }
     }
 
     public fun loadNextPage() {
         if (!pagination.startAppend()) return
         publishState()
-        requestPage(activeQuery, pagination.nextPage, generation)
+        requestPage(appliedQuery, pagination.nextPage, generation)
     }
 
     public fun refresh() {
-        val query = latestQuery.trim()
+        val query = inputQuery.trim()
         if (!pagination.startRefresh()) return
         debounceJob?.cancel()
         debounceJob = null
         requestJob?.cancel()
         val currentGeneration = ++generation
-        activeQuery = query
+        appliedQuery = query
         publishState()
         requestPage(query, FIRST_PAGE, currentGeneration)
     }
 
     public fun retry() {
         when (container.stateFlow.value.content) {
-            is CitiesContentState.EmptyFailure -> loadInitial(latestQuery.trim())
+            is CitiesContentState.EmptyFailure -> loadInitial(inputQuery.trim())
             is CitiesContentState.ContentFailure -> loadNextPage()
             else -> Unit
         }
@@ -84,7 +84,7 @@ public class CitiesViewModel(
         debounceJob = null
         requestJob?.cancel()
         val expectedGeneration = ++generation
-        activeQuery = query
+        appliedQuery = query
         pagination.startInitial()
         publishState()
         requestPage(query, FIRST_PAGE, expectedGeneration)
@@ -93,12 +93,12 @@ public class CitiesViewModel(
     private fun requestPage(query: String, page: Int, expectedGeneration: Int) {
         requestJob = viewModelScope.launch {
             when (val result = repository.cities(query.ifEmpty { null }, page, PAGE_SIZE)) {
-                is CitiesResult.Success -> if (expectedGeneration == generation && query == activeQuery) {
+                is CitiesResult.Success -> if (expectedGeneration == generation && query == appliedQuery) {
                     pagination.append(result.value)
                     publishState()
                 }
 
-                is CitiesResult.Failure -> if (expectedGeneration == generation && query == activeQuery) {
+                is CitiesResult.Failure -> if (expectedGeneration == generation && query == appliedQuery) {
                     val effect = pagination.fail(CitiesRequestException(result.error))
                     publishState()
                     if (effect is PaginationEffect.RefreshFailure) {
@@ -112,8 +112,8 @@ public class CitiesViewModel(
     private fun publishState() = intent {
         reduce {
             state.copy(
-                query = latestQuery,
-                content = pagination.state.toUi(activeQuery, countryFormatter)
+                query = inputQuery,
+                content = pagination.state.toUi(appliedQuery, countryFormatter)
             )
         }
     }
