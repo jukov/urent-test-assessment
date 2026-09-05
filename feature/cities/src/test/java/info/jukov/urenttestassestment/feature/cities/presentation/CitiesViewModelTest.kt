@@ -193,24 +193,25 @@ class CitiesViewModelTest {
     }
 
     @Test
-    fun `refresh is ignored after pagination failure`() = runTest(dispatcher) {
+    fun `refresh replaces content after pagination failure`() = runTest(dispatcher) {
         val repository = FakeRepository(
             mutableListOf(
                 success(city(1), total = 40),
-                CitiesResult.Failure(CitiesError.Network)
+                CitiesResult.Failure(CitiesError.Network),
+                success(city(2), total = 40)
             )
         )
         val viewModel = viewModel(repository)
         advanceUntilIdle()
         viewModel.loadNextPage()
         advanceUntilIdle()
-        val failed = viewModel.container.stateFlow.value.content
-
         viewModel.refresh()
-        advanceUntilIdle()
 
-        assertEquals(2, repository.requests.size)
-        assertEquals(failed, viewModel.container.stateFlow.value.content)
+        val content = viewModel.container.stateFlow.first {
+            (it.content as? CitiesContentState.Content)?.cities?.singleOrNull()?.id == 2L
+        }.content as CitiesContentState.Content
+        assertEquals(listOf(2L), content.cities.map(CityUi::id))
+        assertEquals(listOf(1, 2, 1), repository.requests.map(Request::page))
     }
 
     @Test

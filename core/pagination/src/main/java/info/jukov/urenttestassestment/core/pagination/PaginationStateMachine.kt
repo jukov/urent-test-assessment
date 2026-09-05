@@ -61,8 +61,12 @@ public class PaginationStateMachine<T, Id>(private val idOf: (T) -> Id) {
                 PaginationState.ContentRefreshing(current.items)
             }
 
-            is PaginationState.ContentRefreshing,
-            is PaginationState.ContentFailure -> return false
+            is PaginationState.ContentFailure -> {
+                stateBeforeRefresh = current
+                PaginationState.ContentRefreshing(current.items)
+            }
+
+            is PaginationState.ContentRefreshing -> return false
 
             else -> {
                 stateBeforeRefresh = null

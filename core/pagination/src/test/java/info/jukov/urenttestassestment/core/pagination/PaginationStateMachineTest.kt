@@ -101,16 +101,23 @@ class PaginationStateMachineTest {
     }
 
     @Test
-    fun `refresh is rejected after append failure`() {
+    fun `refresh after append failure restores pagination error on refresh failure`() {
         val appendFailure = IllegalStateException("append failed")
+        val refreshFailure = IllegalStateException("refresh failed")
         val items = listOf(Item(1), Item(2))
         machine.append(Page(items = items, page = 1, limit = 2, total = 4))
         machine.startAppend()
         machine.fail(appendFailure)
 
-        assertFalse(machine.startRefresh())
+        assertTrue(machine.startRefresh())
+        assertEquals(PaginationState.ContentRefreshing(items), machine.state)
+        assertEquals(1, machine.nextPage)
+
+        val effect = machine.fail(refreshFailure)
+
         assertEquals(PaginationState.ContentFailure(items, appendFailure), machine.state)
         assertEquals(2, machine.nextPage)
+        assertEquals(PaginationEffect.RefreshFailure(refreshFailure), effect)
     }
 
     @Test

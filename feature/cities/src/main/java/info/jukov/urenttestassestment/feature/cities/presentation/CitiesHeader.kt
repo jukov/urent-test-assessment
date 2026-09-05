@@ -1,5 +1,7 @@
 package info.jukov.urenttestassestment.feature.cities.presentation
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -24,9 +27,18 @@ import info.jukov.urenttestassestment.core.ui.theme.URentShapes
 import info.jukov.urenttestassestment.feature.cities.R
 
 @Composable
-internal fun CitiesHeader(query: String, elevation: Dp, onQueryChanged: (String) -> Unit) {
+internal fun CitiesHeader(query: String, elevation: Dp, onQueryChanged: (String) -> Unit, onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
     Surface(
-        modifier = Modifier.fillMaxWidth().zIndex(1f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .zIndex(1f)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClickLabel = stringResource(R.string.cities_scroll_to_top),
+                onClick = onClick
+            ),
         shape = URentShapes.bottomRadius16,
         color = MaterialTheme.colorScheme.background,
         tonalElevation = 0.dp,

@@ -57,13 +57,13 @@ internal fun pullToRefreshDistance(statusBarHeight: Dp): Dp =
 internal fun CitiesContentState.isPullToRefreshEnabled(): Boolean = when (this) {
     is CitiesContentState.Content,
     is CitiesContentState.ContentProgress,
+    is CitiesContentState.ContentFailure,
     is CitiesContentState.ContentRefreshing,
     is CitiesContentState.ContentEndReached -> true
 
     CitiesContentState.EmptyProgress,
     is CitiesContentState.Empty,
-    is CitiesContentState.EmptyFailure,
-    is CitiesContentState.ContentFailure -> false
+    is CitiesContentState.EmptyFailure -> false
 }
 
 private const val PULL_TO_REFRESH_Z_INDEX = 2f
