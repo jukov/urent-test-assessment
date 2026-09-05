@@ -1,5 +1,6 @@
 package info.jukov.urenttestassestment.core.ui
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import info.jukov.urenttestassestment.core.ui.component.buttonContainerColor
@@ -15,12 +16,21 @@ import info.jukov.urenttestassestment.core.ui.theme.BackgroundPrimary
 import info.jukov.urenttestassestment.core.ui.theme.BackgroundTertiary
 import info.jukov.urenttestassestment.core.ui.theme.ButtonPrimaryBackground
 import info.jukov.urenttestassestment.core.ui.theme.ButtonPrimaryBackgroundPressed
+import info.jukov.urenttestassestment.core.ui.theme.URentShapes
 import info.jukov.urenttestassestment.core.ui.theme.URentSizes
 import info.jukov.urenttestassestment.core.ui.theme.URentSpacing
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class DesignSystemTest {
+    @Test
+    fun `bottom radius shape keeps top corners square`() {
+        assertEquals(
+            RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomEnd = 16.dp, bottomStart = 16.dp),
+            URentShapes.bottomRadius16
+        )
+    }
+
     @Test
     fun `button and input state mappings match specification`() {
         assertEquals(ButtonPrimaryBackground, buttonContainerColor(isPressed = false))

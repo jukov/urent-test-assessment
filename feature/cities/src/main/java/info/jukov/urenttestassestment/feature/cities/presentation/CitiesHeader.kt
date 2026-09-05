@@ -20,12 +20,14 @@ import androidx.compose.ui.zIndex
 import info.jukov.urenttestassestment.core.ui.component.URentTextField
 import info.jukov.urenttestassestment.core.ui.icon.Search
 import info.jukov.urenttestassestment.core.ui.icon.URentIcons
+import info.jukov.urenttestassestment.core.ui.theme.URentShapes
 import info.jukov.urenttestassestment.feature.cities.R
 
 @Composable
 internal fun CitiesHeader(query: String, elevation: Dp, onQueryChanged: (String) -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().zIndex(1f),
+        shape = URentShapes.bottomRadius16,
         color = MaterialTheme.colorScheme.background,
         tonalElevation = 0.dp,
         shadowElevation = elevation
