@@ -2,7 +2,6 @@ package info.jukov.urenttestassestment.core.ui.component
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -11,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import info.jukov.urenttestassestment.core.ui.theme.ButtonPrimaryBackground
 import info.jukov.urenttestassestment.core.ui.theme.ButtonPrimaryBackgroundPressed
 import info.jukov.urenttestassestment.core.ui.theme.URentShapes
@@ -25,14 +25,13 @@ fun URentButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
         enabled = enabled,
         shape = URentShapes.radius16,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isPressed) {
-                ButtonPrimaryBackgroundPressed
-            } else {
-                ButtonPrimaryBackground
-            }
+            containerColor = buttonContainerColor(isPressed)
         ),
         interactionSource = interactionSource
     ) {
         Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
 }
+
+internal fun buttonContainerColor(isPressed: Boolean): Color =
+    if (isPressed) ButtonPrimaryBackgroundPressed else ButtonPrimaryBackground

@@ -16,13 +16,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import info.jukov.urenttestassestment.core.ui.theme.AccentBrand
 import info.jukov.urenttestassestment.core.ui.theme.BackgroundPrimary
 import info.jukov.urenttestassestment.core.ui.theme.BackgroundTertiary
 import info.jukov.urenttestassestment.core.ui.theme.URentShapes
+import info.jukov.urenttestassestment.core.ui.theme.URentSizes
 import info.jukov.urenttestassestment.core.ui.theme.URentSpacing
 
 @Composable
@@ -37,14 +40,19 @@ fun URentTextField(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val visuals = textFieldVisuals(isFocused)
     val textStyle = LocalTextStyle.current
     val containerModifier = modifier
-        .defaultMinSize(minHeight = 56.dp)
+        .defaultMinSize(minHeight = URentSizes.inputMinHeight)
         .background(
-            color = if (isFocused) BackgroundPrimary else BackgroundTertiary,
+            color = visuals.background,
             shape = URentShapes.radius16
         ).let {
-            if (isFocused) it.border(1.5.dp, AccentBrand, URentShapes.radius16) else it
+            if (visuals.borderWidth > 0.dp) {
+                it.border(visuals.borderWidth, visuals.borderColor, URentShapes.radius16)
+            } else {
+                it
+            }
         }.padding(URentSpacing.space16)
 
     BasicTextField(
@@ -70,4 +78,12 @@ fun URentTextField(
             }
         }
     )
+}
+
+internal data class TextFieldVisuals(val background: Color, val borderColor: Color, val borderWidth: Dp)
+
+internal fun textFieldVisuals(isFocused: Boolean): TextFieldVisuals = if (isFocused) {
+    TextFieldVisuals(BackgroundPrimary, AccentBrand, URentSizes.selectedBorderWidth)
+} else {
+    TextFieldVisuals(BackgroundTertiary, Color.Transparent, 0.dp)
 }

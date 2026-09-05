@@ -11,3 +11,8 @@ object URentSpacing {
 object URentShapes {
     val radius16 = RoundedCornerShape(16.dp)
 }
+
+object URentSizes {
+    val inputMinHeight = 56.dp
+    val selectedBorderWidth = 1.5.dp
+}

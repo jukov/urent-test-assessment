@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import info.jukov.urenttestassestment.core.ui.component.buttonContainerColor
+import info.jukov.urenttestassestment.core.ui.component.textFieldVisuals
 import info.jukov.urenttestassestment.core.ui.icon.URentIcons
 import info.jukov.urenttestassestment.core.ui.theme.AccentBrand
 import info.jukov.urenttestassestment.core.ui.theme.AccentDestructive
@@ -13,6 +15,8 @@ import info.jukov.urenttestassestment.core.ui.theme.BackgroundTertiary
 import info.jukov.urenttestassestment.core.ui.theme.ButtonPrimaryBackground
 import info.jukov.urenttestassestment.core.ui.theme.ButtonPrimaryBackgroundPressed
 import info.jukov.urenttestassestment.core.ui.theme.Title4
+import info.jukov.urenttestassestment.core.ui.theme.URentSizes
+import info.jukov.urenttestassestment.core.ui.theme.URentSpacing
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -34,6 +38,25 @@ class DesignSystemTest {
         assertEquals(16.sp, Title4.fontSize)
         assertEquals(20.sp, Title4.lineHeight)
         assertEquals(0.sp, Title4.letterSpacing)
+    }
+
+    @Test
+    fun `button and input state mappings match specification`() {
+        assertEquals(ButtonPrimaryBackground, buttonContainerColor(isPressed = false))
+        assertEquals(ButtonPrimaryBackgroundPressed, buttonContainerColor(isPressed = true))
+
+        val unselected = textFieldVisuals(isFocused = false)
+        assertEquals(BackgroundTertiary, unselected.background)
+        assertEquals(Color.Transparent, unselected.borderColor)
+        assertEquals(0.dp, unselected.borderWidth)
+
+        val selected = textFieldVisuals(isFocused = true)
+        assertEquals(BackgroundPrimary, selected.background)
+        assertEquals(AccentBrand, selected.borderColor)
+        assertEquals(1.5.dp, selected.borderWidth)
+        assertEquals(56.dp, URentSizes.inputMinHeight)
+        assertEquals(16.dp, URentSpacing.space16)
+        assertEquals(12.dp, URentSpacing.space12)
     }
 
     @Test
