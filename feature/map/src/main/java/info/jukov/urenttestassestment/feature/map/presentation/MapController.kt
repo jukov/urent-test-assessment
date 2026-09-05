@@ -39,12 +39,13 @@ import org.maplibre.android.style.sources.GeoJsonSource
 internal class MapController(
     private val map: MapLibreMap,
     camera: MapCamera,
-    private val onIdle: (MapCamera, MapViewport) -> Unit,
+    private val onIdle: (MapCamera, MapViewport?) -> Unit,
     private val onStyleError: (Boolean) -> Unit,
     private val onSelectCity: (Long?) -> Unit,
     private val selectedColor: Int
 ) {
-    val cityCamera = MapCityCamera(map)
+    private val viewportUpdates = MapViewportUpdates(map)
+    val cityCamera = MapCityCamera(map, viewportUpdates::onCityFocus)
     private var disposed = false
     private var selectedCityId: Long? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -53,7 +54,7 @@ internal class MapController(
         markerJson = json
         map.style?.getSourceAs<GeoJsonSource>(CITIES_SOURCE)?.setGeoJson(json)
     }
-    private val idleListener = MapLibreMap.OnCameraIdleListener { publishViewport() }
+    private val idleListener = MapLibreMap.OnCameraIdleListener { publishViewport(viewportUpdates.loadCities) }
 
     private val clickListener = MapLibreMap.OnMapClickListener { coordinate ->
         val feature = map.queryRenderedFeatures(map.projection.toScreenLocation(coordinate), CITIES_LAYER).firstOrNull()
@@ -124,29 +125,35 @@ internal class MapController(
     }
 
     fun zoom(increase: Boolean) {
+        viewportUpdates.onUserMove()
         map.animateCamera(if (increase) CameraUpdateFactory.zoomIn() else CameraUpdateFactory.zoomOut())
     }
 
     fun dispose() {
         cityCamera.cancel()
+        viewportUpdates.dispose()
         disposed = true
         scope.cancel()
         map.removeOnCameraIdleListener(idleListener)
         map.removeOnMapClickListener(clickListener)
     }
 
-    fun publishViewport() {
+    fun publishViewport(loadCities: Boolean = true) {
         val camera = map.cameraPosition
         val center = camera.target
         if (disposed || center == null) return
         val region = map.projection.visibleRegion
         onIdle(
             MapCamera(center.latitude, center.longitude, camera.zoom),
-            MapViewport.fromCorners(
-                center.toCoordinate(),
-                listOf(region.farLeft, region.farRight, region.nearLeft, region.nearRight)
-                    .map { (it ?: return).toCoordinate() }
-            )
+            if (!loadCities) {
+                null
+            } else {
+                MapViewport.fromCorners(
+                    center.toCoordinate(),
+                    listOf(region.farLeft, region.farRight, region.nearLeft, region.nearRight)
+                        .map { (it ?: return).toCoordinate() }
+                )
+            }
         )
     }
 }

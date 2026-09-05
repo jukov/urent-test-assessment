@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +36,7 @@ internal fun MapCityOverlay(
 ) {
     val presentation = rememberMapCitySheet(selected, onDismiss)
     val sheetState = presentation.state
+    val scope = rememberCoroutineScope()
     val handleHeightPx = with(LocalDensity.current) { MAP_CITY_SHEET_HANDLE_HEIGHT.roundToPx() }
     BoxWithConstraints(Modifier.fillMaxSize().clipToBounds()) {
         val height = maxHeight
@@ -49,9 +52,10 @@ internal fun MapCityOverlay(
             sheetMaxWidth = Dp.Unspecified,
             sheetShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             sheetShadowElevation = 4.dp,
-            sheetDragHandle = if (presentation.city == null) null else ({ MapCitySheetHandle() }),
+            sheetDragHandle = null,
             sheetContent = {
                 presentation.city?.let { city ->
+                    MapCitySheetHandle { scope.launch { sheetState.hide() } }
                     key(city.id) {
                         MapCitySheet(
                             city,

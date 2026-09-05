@@ -60,6 +60,48 @@ class MapViewModelTest {
     }
 
     @Test
+    fun `city focus saves camera without requesting cities and next user move loads`() = runTest(dispatcher) {
+        val requests = mutableListOf<MapViewport>()
+        val vm = viewModel {
+            requests += it
+            success(1)
+        }
+        vm.onCameraIdle(camera, viewport)
+        advanceUntilIdle()
+        vm.selectCity(1)
+        val content = vm.container.stateFlow.value
+        val focusedCamera = camera.copy(latitude = 55.8)
+        vm.onCameraIdle(focusedCamera, null)
+        advanceUntilIdle()
+        assertEquals(listOf(viewport), requests)
+        assertEquals(content, vm.container.stateFlow.value)
+        assertEquals(focusedCamera, vm.camera)
+
+        val moved = viewport.copy(center = Coordinate(55.8, 37.62))
+        vm.onCameraIdle(focusedCamera, moved)
+        advanceUntilIdle()
+        assertEquals(listOf(viewport, moved), requests)
+    }
+
+    @Test
+    fun `focus does not cancel pending viewport request or replace its retry target`() = runTest(dispatcher) {
+        val requests = mutableListOf<MapViewport>()
+        val vm = viewModel {
+            requests += it
+            MapResult.Failure
+        }
+        vm.onCameraIdle(camera, viewport)
+        advanceTimeBy(100)
+        vm.onCameraIdle(camera.copy(latitude = 56.0), null)
+        advanceUntilIdle()
+        assertEquals(listOf(viewport), requests)
+        assertEquals(MapLoadState.Error, vm.container.stateFlow.value.loadState)
+        vm.retry()
+        advanceUntilIdle()
+        assertEquals(listOf(viewport, viewport), requests)
+    }
+
+    @Test
     fun `content is published through Orbit`() = runTest(dispatcher) {
         viewModel { success(1) }.test(this) {
             containerHost.onCameraIdle(camera, viewport)

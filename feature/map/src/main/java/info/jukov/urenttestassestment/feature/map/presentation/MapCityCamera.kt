@@ -5,11 +5,12 @@ import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 
-internal class MapCityCamera(private val map: MapLibreMap) {
+internal class MapCityCamera(private val map: MapLibreMap, private val onFocus: () -> Unit = {}) {
     private var animating = false
     private var generation = 0L
 
     fun focus(city: MapCityUi, sheetHeightPx: Int) {
+        onFocus()
         cancel()
         val point = map.projection.toScreenLocation(LatLng(city.latitude, city.longitude))
         // The camera target is the full map's center. Move it half a sheet south in

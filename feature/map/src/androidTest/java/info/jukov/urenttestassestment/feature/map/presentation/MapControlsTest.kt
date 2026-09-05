@@ -4,9 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -61,6 +62,22 @@ class MapControlsTest {
         compose.onNodeWithTag("city_sheet_handle", useUnmergedTree = true).performTouchInput { click() }
         compose.onNodeWithText("Moscow").assertDoesNotExist()
         assertEquals(originalTop, zoom.fetchSemanticsNode().boundsInRoot.top)
+    }
+
+    @Test
+    fun holdingSheetHandleDoesNotDrawRippleAndReleaseStillDismisses() {
+        val selected = mutableStateOf<MapCityUi?>(MapCityUi(1, "Moscow", 55.75, 37.62, 100, "RU"))
+        compose.setContent { URentTheme { MapCityOverlay(selected.value, {}, { selected.value = null }, {}) } }
+        val handle = compose.onNodeWithTag("city_sheet_handle", useUnmergedTree = true)
+        val before = handle.captureToImage().asAndroidBitmap()
+        compose.mainClock.autoAdvance = false
+        handle.performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(200)
+        val pressed = handle.captureToImage().asAndroidBitmap()
+        assertTrue("The handle must not change appearance while pressed", before.sameAs(pressed))
+        handle.performTouchInput { up() }
+        compose.mainClock.autoAdvance = true
+        compose.onNodeWithText("Moscow").assertDoesNotExist()
     }
 
     @Test

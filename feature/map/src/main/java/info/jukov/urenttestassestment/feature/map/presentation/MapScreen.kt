@@ -38,7 +38,7 @@ import info.jukov.urenttestassestment.feature.map.domain.MapViewport
 internal fun MapScreen(
     state: MapState,
     camera: MapCamera,
-    onIdle: (MapCamera, MapViewport) -> Unit,
+    onIdle: (MapCamera, MapViewport?) -> Unit,
     onRetry: () -> Unit,
     onSelectCity: (Long?) -> Unit,
     onSearchCity: (String) -> Unit

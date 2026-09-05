@@ -23,7 +23,7 @@ import org.maplibre.android.maps.MapView
 internal fun MapSurface(
     cities: List<MapCityUi>,
     camera: MapCamera,
-    onIdle: (MapCamera, MapViewport) -> Unit,
+    onIdle: (MapCamera, MapViewport?) -> Unit,
     onController: (MapController?) -> Unit,
     onStyleError: (Boolean) -> Unit,
     modifier: Modifier = Modifier,

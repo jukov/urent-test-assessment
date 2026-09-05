@@ -35,11 +35,12 @@ public class MapViewModel(
             return MapCamera(latitude, longitude, zoom)
         }
 
-    public fun onCameraIdle(camera: MapCamera, viewport: MapViewport) {
+    /** A null viewport saves a presentation-only camera move without changing the cities request. */
+    public fun onCameraIdle(camera: MapCamera, viewport: MapViewport?) {
         savedState["map_lat"] = camera.latitude
         savedState["map_lng"] = camera.longitude
         savedState["map_zoom"] = camera.zoom
-        if (this.viewport == viewport) return
+        if (viewport == null || this.viewport == viewport) return
         this.viewport = viewport
         load(viewport, debounce = true)
     }

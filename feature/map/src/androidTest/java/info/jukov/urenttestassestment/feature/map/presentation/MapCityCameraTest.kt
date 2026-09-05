@@ -6,6 +6,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.viewinterop.AndroidView
 import java.util.concurrent.atomic.AtomicBoolean
@@ -16,6 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
@@ -27,6 +29,8 @@ class MapCityCameraTest {
     private lateinit var map: MapLibreMap
     private lateinit var view: MapView
     private lateinit var camera: MapCityCamera
+    private lateinit var updates: MapViewportUpdates
+    private val idleRequests = mutableListOf<Boolean>()
 
     @Test
     fun bottomPinAnimatesToUncoveredCenterWithoutChangingZoomOrPadding() {
@@ -110,6 +114,76 @@ class MapCityCameraTest {
         compose.runOnIdle { assertEquals(stopped, map.cameraPosition) }
     }
 
+    @Test
+    fun focusAndRepeatedSelectionDoNotLoadButZoomDoes() {
+        setUpMap()
+        lateinit var city: MapCityUi
+        compose.runOnIdle {
+            idleRequests.clear()
+            map.cameraPosition = CameraPosition.Builder(map.cameraPosition).zoom(9.5123456).build()
+            city = cityAt(1, 0.8f, 0.9f)
+            camera.focus(cityAt(2, 0.2f, 0.1f), view.height / 3)
+            camera.focus(city, view.height / 2)
+        }
+        awaitCentered(city, view.height / 2)
+        awaitIdleRequest(false)
+        compose.runOnIdle {
+            assertTrue(idleRequests.none { it })
+            idleRequests.clear()
+            updates.onUserMove()
+            map.animateCamera(CameraUpdateFactory.zoomIn(), 100)
+        }
+        awaitIdleRequest(true)
+    }
+
+    @Test
+    fun gestureInterruptingFocusLoadsTheUserViewport() {
+        setUpMap()
+        compose.runOnIdle {
+            idleRequests.clear()
+            camera.focus(cityAt(1, 0.8f, 0.9f), view.height / 2)
+        }
+        compose.runOnIdle { view.panAcrossMap() }
+        awaitIdleRequest(true)
+    }
+
+    @Test
+    fun cancellingFocusDoesNotLoadOrSuppressTheNextGesture() {
+        setUpMap()
+        compose.runOnIdle {
+            idleRequests.clear()
+            camera.focus(cityAt(1, 0.8f, 0.9f), view.height / 2)
+            view.postDelayed({ camera.cancel() }, 50)
+        }
+        awaitIdleRequest(false)
+        compose.runOnIdle {
+            assertTrue(idleRequests.none { it })
+            idleRequests.clear()
+        }
+        compose.runOnIdle { view.panAcrossMap() }
+        awaitIdleRequest(true)
+    }
+
+    @Test
+    fun twoFingerTapDuringFocusZoomsOutAndLoadsItsViewport() {
+        setUpMap()
+        compose.runOnIdle {
+            idleRequests.clear()
+            camera.focus(cityAt(1, 0.8f, 0.9f), view.height / 2)
+            view.postDelayed({ view.tapWithTwoFingers() }, 50)
+        }
+        awaitIdleRequest(true)
+        compose.runOnIdle { assertTrue(map.cameraPosition.zoom < 9.5) }
+    }
+
+    private fun awaitIdleRequest(load: Boolean) {
+        compose.waitUntil(5_000) {
+            var found = false
+            compose.runOnIdle { found = idleRequests.contains(load) }
+            found
+        }
+    }
+
     private fun setUpMap() {
         val ready = AtomicBoolean(false)
         compose.setContent {
@@ -123,18 +197,23 @@ class MapCityCameraTest {
                 mapView.onResume()
                 onDispose {
                     if (::camera.isInitialized) camera.cancel()
+                    if (::updates.isInitialized) updates.dispose()
                     mapView.onPause()
                     mapView.onStop()
                     mapView.onDestroy()
                 }
             }
             AndroidView(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().testTag("native_map"),
                 factory = {
                     view = mapView
                     mapView.getMapAsync { nativeMap ->
                         map = nativeMap
-                        camera = MapCityCamera(map)
+                        updates = MapViewportUpdates(map)
+                        camera = MapCityCamera(map, updates::onCityFocus)
+                        map.addOnCameraIdleListener {
+                            idleRequests += updates.loadCities
+                        }
                         map.setStyle(Style.Builder().fromJson(EMPTY_STYLE)) {
                             map.cameraPosition = CameraPosition.Builder()
                                 .target(LatLng(55.75, 37.62)).zoom(9.5).build()
