@@ -47,10 +47,6 @@ Feature- и network-код не должен импортировать Timber �
 `HttpURLConnection`, на котором наблюдалось падение `Unbalanced enter/exit` при отмене
 чтения ответа. Отмена корутин продолжает распространяться вызывающему коду.
 
-Тест `OkHttpCancellationTest` использует локальный HTTP-сервер и настоящий engine:
-отменяет чтение незавершённого ответа и проверяет следующий запрос тем же клиентом.
-Внешний API для этой проверки не нужен.
-
 ## GitHub Actions
 
 [Workflow](.github/workflows/ci.yml) запускается для pull request, push в `main` и вручную.

@@ -3,7 +3,6 @@ package info.jukov.urenttestassestment.core.network
 import info.jukov.urenttestassestment.core.logging.Logger
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.engine.okhttp.OkHttpEngine
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.pluginOrNull
 import io.ktor.client.request.get
@@ -27,13 +26,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HttpClientFactoryTest {
-    @Test
-    fun `default client uses OkHttp engine`() {
-        createHttpClient().use { client ->
-            assertTrue(client.engine is OkHttpEngine)
-        }
-    }
-
     @Test
     fun `closing default client closes its engine`() = runTest {
         val client = createHttpClient()

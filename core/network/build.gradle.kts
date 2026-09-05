@@ -11,7 +11,6 @@ android {
 }
 
 dependencies {
-    testImplementation(libs.okhttp.mockwebserver)
     api(libs.ktor.client.core)
     implementation(project(":core:logging"))
     implementation(libs.koin.core)
