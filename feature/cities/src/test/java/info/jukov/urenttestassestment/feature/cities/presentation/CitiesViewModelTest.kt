@@ -319,7 +319,7 @@ class CitiesViewModelTest {
     }
 
     @Test
-    fun `refresh uses latest query without losing pending debounced search`() = runTest(dispatcher) {
+    fun `refresh uses pending query and clears content from previous query`() = runTest(dispatcher) {
         val initial = CompletableDeferred<CitiesResult<Page<City>>>()
         val refresh = CompletableDeferred<CitiesResult<Page<City>>>()
         val repository = DeferredRepository(initial, refresh)
@@ -335,7 +335,7 @@ class CitiesViewModelTest {
 
         assertEquals(Request("Mos", 1, 20), repository.requests.last())
         viewModel.container.stateFlow.first {
-            it.content is CitiesContentState.ContentRefreshing
+            it.content is CitiesContentState.EmptyProgress
         }
         refresh.complete(success(city(2), total = 40))
         val content = viewModel.container.stateFlow.first {
@@ -347,6 +347,51 @@ class CitiesViewModelTest {
         assertEquals(2, repository.requests.size)
         assertEquals("  Mos  ", viewModel.container.stateFlow.value.query)
         assertEquals(listOf(2L), content.cities.map(CityUi::id))
+    }
+
+    @Test
+    fun `failed refresh of pending search blocks pagination until first page retry succeeds`() = runTest(dispatcher) {
+        val repository = FakeRepository(
+            mutableListOf(
+                success(city(1, "Paris", "FR"), total = 40),
+                CitiesResult.Failure(CitiesError.Network),
+                success(city(2, "Moscow", "RU"), total = 40),
+                success(city(3, "Moscow Mills", "US"), page = 2, total = 40)
+            )
+        )
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.onQueryChanged("  Mos  ")
+        viewModel.refresh()
+        advanceUntilIdle()
+        viewModel.loadNextPage()
+        advanceUntilIdle()
+
+        assertEquals(listOf(Request(null, 1, 20), Request("Mos", 1, 20)), repository.requests)
+        val failure = viewModel.container.stateFlow.first {
+            it.content is CitiesContentState.EmptyFailure
+        }.content as CitiesContentState.EmptyFailure
+        assertEquals(CitiesError.Network, failure.error)
+        assertEquals("  Mos  ", viewModel.container.stateFlow.value.query)
+
+        viewModel.retry()
+        advanceUntilIdle()
+        val firstPage = viewModel.container.stateFlow.first {
+            it.content is CitiesContentState.Content
+        }.content as CitiesContentState.Content
+        assertEquals(listOf("Moscow, Russia"), firstPage.cities.map(CityUi::title))
+
+        viewModel.loadNextPage()
+        advanceUntilIdle()
+        val content = viewModel.container.stateFlow.first {
+            it.content is CitiesContentState.ContentEndReached
+        }.content as CitiesContentState.ContentEndReached
+        assertEquals(listOf(2L, 3L), content.cities.map(CityUi::id))
+        assertEquals(
+            listOf(Request(null, 1, 20), Request("Mos", 1, 20), Request("Mos", 1, 20), Request("Mos", 2, 20)),
+            repository.requests
+        )
     }
 
     @Test
