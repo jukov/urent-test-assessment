@@ -64,3 +64,15 @@ Kotlin, Jetpack Compose, Orbit MVI, Koin, Ktor и AndroidX Navigation Compose.
 ```
 
 [GitHub Actions](.github/workflows/ci.yml) выполняет проверки для PR и ветки `main`.
+
+UI-тесты запускаются отдельно вручную: **Actions → UI tests → Run workflow**,
+выбрать ветку и подтвердить запуск. Workflow станет доступен после попадания
+[ui-tests.yml](.github/workflows/ui-tests.yml) в `main`. Он запускает тесты `app` и
+`feature:map` на эмуляторе Android 15 (API 35); отчёты доступны в артефакте
+`ui-test-reports` в течение 7 дней, в том числе при падении тестов.
+
+Локально, с запущенным эмулятором или подключённым устройством:
+
+```shell
+./gradlew :app:connectedDebugAndroidTest :feature:map:connectedDebugAndroidTest
+```
