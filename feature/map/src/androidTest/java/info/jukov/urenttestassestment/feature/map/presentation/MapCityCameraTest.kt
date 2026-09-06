@@ -49,7 +49,10 @@ class MapCityCameraTest {
         awaitCentered(city, bottom)
         compose.runOnIdle {
             val targetY = (view.height - bottom) / 2f
-            assertTrue(positions.any { it > targetY + 5 && it < initialY - 5 })
+            assertTrue(
+                "initialY=$initialY targetY=$targetY positions=$positions",
+                positions.any { it > targetY + 5 && it < initialY - 5 }
+            )
             assertEquals(9.5, map.cameraPosition.zoom, 0.001)
             assertTrue(map.cameraPosition.padding!!.all { it == 0.0 })
         }

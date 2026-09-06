@@ -1,14 +1,17 @@
 package info.jukov.urenttestassestment
 
+import android.util.Log
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.printToString
 import androidx.test.platform.app.InstrumentationRegistry
 import info.jukov.urenttestassestment.core.ui.theme.URentTheme
 import info.jukov.urenttestassestment.feature.cities.R as CitiesR
@@ -40,7 +43,24 @@ class CitiesListTest {
     @Test
     fun inputSearchesAndDisplaysCitiesThenEmptyResults() {
         fixture.succeed(0)
-        compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed()
+        val responseState = fixture.viewModel.container.stateFlow.value
+        try {
+            compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed()
+        } catch (failure: AssertionError) {
+            Log.e(
+                "CitiesDiagnostic",
+                "after complete=$responseState; at failure=${fixture.viewModel.container.stateFlow.value}"
+            )
+            Log.e("CitiesDiagnostic", compose.onRoot(useUnmergedTree = true).printToString())
+            compose.waitUntil(5_000) {
+                runCatching { compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed() }.isSuccess
+            }
+            Log.e(
+                "CitiesDiagnostic",
+                "City became displayed after waiting; state=${fixture.viewModel.container.stateFlow.value}"
+            )
+            throw failure
+        }
         compose.onNode(hasSetTextAction()).performTextInput("Atlantis")
         compose.onNode(hasSetTextAction()).assertTextContains("Atlantis")
         awaitRequests(2)
