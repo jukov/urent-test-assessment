@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "info.jukov.urenttestassestment.core.network"
+    namespace = "info.jukov.urenttestassessment.core.network"
     buildFeatures {
         buildConfig = true
     }

@@ -3,7 +3,7 @@
 Android-приложение для поиска городов и просмотра их на карте.
 [Исходное задание](docs/TASK.md) · [Спецификация проекта](docs/PROJECT_SPEC.md)
 
-[Последний релиз](https://github.com/jukov/urent-test-assestment/releases/latest)
+[Последний релиз](https://github.com/jukov/urent-test-assessment/releases/latest)
 
 [Подготовка подписанного релиза](docs/RELEASING.md).
 

@@ -25,13 +25,13 @@ val signingPropertiesFile = rootProject.file(
 val releaseSigning = ReleaseSigning.load(signingPropertiesFile)
 
 android {
-    namespace = "info.jukov.urenttestassestment"
+    namespace = "info.jukov.urenttestassessment"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "info.jukov.urenttestassestment"
+        applicationId = "info.jukov.urenttestassessment"
         minSdk = 28
         targetSdk = 37
         versionCode = releaseVersion.code

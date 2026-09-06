@@ -23,7 +23,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "URent test assestment"
+rootProject.name = "URent test assessment"
 include(":app")
 include(":core:logging")
 include(":core:ui")

@@ -3,5 +3,5 @@ plugins {
 }
 
 android {
-    namespace = "info.jukov.urenttestassestment.core.model"
+    namespace = "info.jukov.urenttestassessment.core.model"
 }

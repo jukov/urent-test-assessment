@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">URent test assestment</string>
+    <string name="app_name" translatable="false">URent test assessment</string>
     <string name="tab_cities">Cities</string>
     <string name="tab_map">Map</string>
     <string name="startup_offline_title">No internet connection</string>

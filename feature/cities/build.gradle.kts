@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "info.jukov.urenttestassestment.feature.cities"
+    namespace = "info.jukov.urenttestassessment.feature.cities"
     buildFeatures { compose = true }
 }
 

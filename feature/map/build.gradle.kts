@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "info.jukov.urenttestassestment.feature.map"
+    namespace = "info.jukov.urenttestassessment.feature.map"
     buildFeatures { compose = true }
     defaultConfig { testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
 }
