@@ -13,11 +13,22 @@ Minor и patch находятся в диапазоне 0–999, итоговы�
 Release-сборка оптимизируется R8; состав правил и проверка минифицированного APK
 описаны в [R8.md](R8.md). Сохраняйте `mapping.txt` вместе с APK каждого выпуска.
 
+Release APK автоматически получает имя `urent_jukov_v<versionName>.apk`:
+`urent_jukov_v1.0.0.apk` для `v1.0.0` или
+`urent_jukov_v0.0.0-release-test.apk` без тега/кандидата.
+
 ## Локальная подпись
 
 Ключ и пароли хранятся только локально в `keys/` основного worktree; каталог
 исключён из Git. Для последующих обновлений приложения нужен тот же ключ.
 Сохраните резервную копию каталога в защищённом хранилище.
+
+Если properties отсутствует, заполнен не полностью или файл keystore не найден,
+release автоматически подписывается стандартным debug-ключом Android. R8 остаётся
+включённым, APK не становится debuggable. Неверный пароль или повреждённый найденный
+keystore остаются ошибкой подписи. Для опубликованного выпуска передавайте основные
+ключи и проверяйте сертификат: APK с debug-подписью нельзя установить как обновление
+поверх APK с другой подписью.
 
 Файл `keys/release.properties`:
 
@@ -40,7 +51,9 @@ keyPassword=<пароль ключа>
   -PsigningProperties=/absolute/path/to/main-worktree/keys/release.properties
 ```
 
-Для обычной тестовой release-сборки параметр `candidateReleaseTag` можно опустить.
+Для обычной тестовой release-сборки оба параметра можно опустить:
+`./gradlew :app:assembleRelease`. Получится тестовая версия с debug-подписью,
+если в текущем worktree нет основных ключей.
 
 `candidateReleaseTag` — явная версия только для локальной предварительной проверки
 до создания тега. Если тег на HEAD уже есть, кандидат обязан совпадать с ним.
@@ -65,17 +78,18 @@ keyPassword=<пароль ключа>
 5. Проверьте APK через Android SDK `apksigner verify --verbose --print-certs`
    и `apkanalyzer manifest version-name` / `version-code`: ожидаются
    `1.0.0` / `1000000`. Убедитесь, что `apkanalyzer manifest debuggable` выводит `false`.
-6. Скопируйте `app/build/outputs/apk/release/app-release.apk` в
-   `.context/release/urent.apk`. Постоянное имя asset нужно для ссылки в README.
+6. Скопируйте `app/build/outputs/apk/release/urent_jukov_v1.0.0.apk` в
+   `.context/release/urent_jukov_v1.0.0.apk` и сохраните соответствующий `mapping.txt`.
+   README ведёт на страницу latest-релиза, где доступен APK с именем и версией.
 7. Только когда APK проверен, выполните `git push origin refs/tags/v1.0.0`.
 8. Опубликуйте GitHub Release с APK:
 
    ```shell
-   gh release create v1.0.0 .context/release/urent.apk \
+   gh release create v1.0.0 .context/release/urent_jukov_v1.0.0.apk \
      --verify-tag --title '1.0.0' --generate-notes --latest
    ```
 
-Проверьте загрузку через
-https://github.com/jukov/urent-test-assestment/releases/latest/download/urent.apk.
+Проверьте загрузку APK на странице
+https://github.com/jukov/urent-test-assestment/releases/latest.
 Если публикация Release не удалась после push, повторите публикацию для того же
 тега и проверенного APK; не создавайте новый коммит и не переносите тег.

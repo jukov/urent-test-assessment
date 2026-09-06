@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -24,16 +22,7 @@ val releaseVersion = ReleaseVersion.fromTag(releaseTag)
 val signingPropertiesFile = rootProject.file(
     providers.gradleProperty("signingProperties").getOrElse("keys/release.properties")
 )
-val signingProperties = Properties().apply {
-    if (signingPropertiesFile.isFile) signingPropertiesFile.inputStream().use { load(it) }
-}
-val signingReady = listOf("storeFile", "storePassword", "keyAlias", "keyPassword").all {
-    !signingProperties.getProperty(it).isNullOrBlank()
-}
-val validateRelease = tasks.register<ValidateReleaseTask>("validateRelease") {
-    hasSigning.set(signingReady)
-}
-tasks.matching { it.name == "preReleaseBuild" }.configureEach { dependsOn(validateRelease) }
+val releaseSigning = ReleaseSigning.load(signingPropertiesFile)
 
 android {
     namespace = "info.jukov.urenttestassestment"
@@ -52,18 +41,18 @@ android {
     }
 
     signingConfigs {
-        if (signingReady) {
+        if (releaseSigning != null) {
             create("release") {
-                storeFile = signingPropertiesFile.parentFile.resolve(signingProperties.getProperty("storeFile"))
-                storePassword = signingProperties.getProperty("storePassword")
-                keyAlias = signingProperties.getProperty("keyAlias")
-                keyPassword = signingProperties.getProperty("keyPassword")
+                storeFile = releaseSigning.storeFile
+                storePassword = releaseSigning.storePassword
+                keyAlias = releaseSigning.keyAlias
+                keyPassword = releaseSigning.keyPassword
             }
         }
     }
     buildTypes {
         release {
-            signingConfig = signingConfigs.findByName("release")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             optimization {
                 enable = true
                 keepRules { includeDefault = true }
@@ -77,6 +66,14 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+    }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set(output.versionName.map { "urent_jukov_v$it.apk" })
+        }
     }
 }
 
