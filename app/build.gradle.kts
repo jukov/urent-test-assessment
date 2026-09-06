@@ -6,6 +6,24 @@ plugins {
     id("urent.testing")
 }
 
+// Only tags on HEAD identify a release; an ancestor tag must not label newer code.
+val headTags = providers.exec {
+    workingDir(rootDir)
+    commandLine("git", "tag", "--points-at", "HEAD", "--list", "v*")
+}.standardOutput.asText.get().lineSequence().filter { it.isNotBlank() }.toList()
+require(headTags.size <= 1) { "Multiple release tags on HEAD: $headTags" }
+val candidateTag = providers.gradleProperty("candidateReleaseTag").orNull
+val headTag = headTags.singleOrNull()
+require(candidateTag == null || headTag == null || candidateTag == headTag) {
+    "candidateReleaseTag must match the release tag on HEAD"
+}
+val releaseTag = headTag ?: candidateTag
+val releaseVersion = ReleaseVersion.fromTag(releaseTag)
+val signingPropertiesFile = rootProject.file(
+    providers.gradleProperty("signingProperties").getOrElse("keys/release.properties")
+)
+val releaseSigning = ReleaseSigning.load(signingPropertiesFile)
+
 android {
     namespace = "info.jukov.urenttestassestment"
     compileSdk {
@@ -16,16 +34,28 @@ android {
         applicationId = "info.jukov.urenttestassestment"
         minSdk = 28
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = releaseVersion.code
+        versionName = releaseVersion.name
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseSigning != null) {
+            create("release") {
+                storeFile = releaseSigning.storeFile
+                storePassword = releaseSigning.storePassword
+                keyAlias = releaseSigning.keyAlias
+                keyPassword = releaseSigning.keyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             optimization {
-                enable = false
+                enable = true
+                keepRules { includeDefault = true }
             }
         }
     }
@@ -36,6 +66,14 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+    }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set(output.versionName.map { "urent_jukov_v$it.apk" })
+        }
     }
 }
 
