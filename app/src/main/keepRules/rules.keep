@@ -1,12 +1,19 @@
-# Add project specific R8 rules here.
-# AGP will combine all keep rule files in src/main/keepRules to pass to R8
+# AGP 9.3 composes this directory with optimized Android defaults and the
+# consumer rules embedded in releaseRuntimeClasspath. See docs/R8.md for sources.
 #
-# For more details, see
-#   https://d.android.com/r/tools/r8/keep-rules
-
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# AndroidX / Compose / Navigation: use their consumer rules and generated
+# manifest/resource entry points. No blanket keep for Activities or ViewModels.
+# kotlinx.serialization: bundled rules retain generated serializers for DTOs
+# and typed navigation routes. There are no serializable named companions.
+# Ktor / coroutines: bundled rules cover atomic fields and engine/dispatcher
+# discovery. HttpClient also selects the OkHttp engine explicitly.
+# OkHttp: bundled Android rules cover optional TLS providers.
+# MapLibre: its AAR retains JNI entry points, GeoJSON and Gson JSON tree classes;
+# AndroidX @Keep rules cover its annotated native callbacks.
+# Koin / Orbit: app factories and containers use direct references, without
+# reflective constructor lookup. No extra keep rules are needed for this usage.
+# Timber: release logging is disabled in code; use its bundled consumer rules.
+#
+# No additional app-specific keep or dontwarn rules are currently required.
+# Add only narrowly scoped rules for demonstrated reflection/JNI entry points.
+# Never hide missing classes globally or keep entire dependency/app packages.
