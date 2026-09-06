@@ -90,6 +90,6 @@ keyPassword=<пароль ключа>
    ```
 
 Проверьте загрузку APK на странице
-https://github.com/jukov/urent-test-assestment/releases/latest.
+https://github.com/jukov/urent-test-assessment/releases/latest.
 Если публикация Release не удалась после push, повторите публикацию для того же
 тега и проверенного APK; не создавайте новый коммит и не переносите тег.

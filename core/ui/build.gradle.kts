@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "info.jukov.urenttestassestment.core.ui"
+    namespace = "info.jukov.urenttestassessment.core.ui"
     compileSdk {
         version = release(37)
     }
