@@ -1,8 +1,9 @@
-package info.jukov.urenttestassestment.feature.map.presentation
+package info.jukov.urenttestassestment.feature.map.di
 
 import info.jukov.urenttestassestment.feature.map.data.DefaultMapRepository
 import info.jukov.urenttestassestment.feature.map.data.MapApi
 import info.jukov.urenttestassestment.feature.map.domain.MapRepository
+import info.jukov.urenttestassestment.feature.map.presentation.MapViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
