@@ -1,11 +1,13 @@
-/** Android release identity encoded from a canonical vMAJOR.MINOR.PATCH Git tag. */
+/** Android identity from a canonical Git tag, or a clearly marked untagged test build. */
 data class ReleaseVersion(val name: String, val code: Int) {
     companion object {
         private const val COMPONENT_BASE = 1000L
         private const val MAX_VERSION_CODE = 2_100_000_000L
         private val tagPattern = Regex("v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)")
 
-        fun fromTag(tag: String): ReleaseVersion {
+        fun fromTag(tag: String?): ReleaseVersion {
+            if (tag == null) return ReleaseVersion("0.0.0-release-test", 1)
+
             val match = requireNotNull(tagPattern.matchEntire(tag)) {
                 "Expected a release tag vMAJOR.MINOR.PATCH, got: $tag"
             }

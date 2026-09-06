@@ -5,6 +5,15 @@ import org.junit.Test
 
 class ReleaseVersionTest {
     @Test
+    fun `missing tag produces a test build that can be upgraded to the first release`() {
+        val untagged = ReleaseVersion.fromTag(null)
+
+        assertEquals("0.0.0-release-test", untagged.name)
+        assertTrue(untagged.code > 0)
+        assertTrue(untagged.code < ReleaseVersion.fromTag("v1.0.0").code)
+    }
+
+    @Test
     fun `parses tag into Android release identity`() {
         assertEquals(ReleaseVersion("1.0.0", 1_000_000), ReleaseVersion.fromTag("v1.0.0"))
         assertEquals(ReleaseVersion("12.34.56", 12_034_056), ReleaseVersion.fromTag("v12.34.56"))
@@ -29,7 +38,7 @@ class ReleaseVersionTest {
     @Test
     fun `rejects malformed ambiguous and colliding versions`() {
         listOf(
-            "1.0.0", "v1.0", "v01.0.0", "v1.00.0", "v1.0.00", "v-1.0.0",
+            "", "1.0.0", "v1.0", "v01.0.0", "v1.00.0", "v1.0.00", "v-1.0.0",
             "v1.0.0-rc.1", "v1.0.0+build", "v1.1000.0", "v1.0.1000", "v0.0.0", "v1.0.0\n"
         ).forEach {
             assertThrows("Must reject $it", IllegalArgumentException::class.java) { ReleaseVersion.fromTag(it) }
