@@ -1,17 +1,15 @@
 package info.jukov.urenttestassestment
 
-import android.util.Log
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.printToString
 import androidx.test.platform.app.InstrumentationRegistry
 import info.jukov.urenttestassestment.core.ui.theme.URentTheme
 import info.jukov.urenttestassestment.feature.cities.R as CitiesR
@@ -43,43 +41,26 @@ class CitiesListTest {
     @Test
     fun inputSearchesAndDisplaysCitiesThenEmptyResults() {
         fixture.succeed(0)
-        val responseState = fixture.viewModel.container.stateFlow.value
-        try {
-            compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed()
-        } catch (failure: AssertionError) {
-            Log.e(
-                "CitiesDiagnostic",
-                "after complete=$responseState; at failure=${fixture.viewModel.container.stateFlow.value}"
-            )
-            Log.e("CitiesDiagnostic", compose.onRoot(useUnmergedTree = true).printToString())
-            compose.waitUntil(5_000) {
-                runCatching { compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed() }.isSuccess
-            }
-            Log.e(
-                "CitiesDiagnostic",
-                "City became displayed after waiting; state=${fixture.viewModel.container.stateFlow.value}"
-            )
-            throw failure
-        }
+        awaitDisplayed("Moscow & York, Russia")
         compose.onNode(hasSetTextAction()).performTextInput("Atlantis")
         compose.onNode(hasSetTextAction()).assertTextContains("Atlantis")
         awaitRequests(2)
         assertEquals("Atlantis", fixture.requests[1].query)
         assertEquals(1, fixture.requests[1].page)
         fixture.succeed(1, emptyList())
-        compose.onNodeWithText(context.getString(CitiesR.string.cities_empty)).assertIsDisplayed()
+        awaitDisplayed(context.getString(CitiesR.string.cities_empty))
         compose.onNodeWithText("Moscow & York, Russia").assertDoesNotExist()
     }
 
     @Test
     fun initialErrorRetryLoadsCities() {
         fixture.requests[0].response.complete(CitiesResult.Failure(CitiesError.Network))
-        compose.onNodeWithText(context.getString(CitiesR.string.cities_error_network)).assertIsDisplayed()
+        awaitDisplayed(context.getString(CitiesR.string.cities_error_network))
         compose.onNodeWithText(context.getString(CitiesR.string.cities_retry)).performClick()
         awaitRequests(2)
         assertEquals(1, fixture.requests[1].page)
         fixture.succeed(1)
-        compose.onNodeWithText("Moscow & York, Russia").assertIsDisplayed()
+        awaitDisplayed("Moscow & York, Russia")
         compose.onNodeWithText(context.getString(CitiesR.string.cities_retry)).assertDoesNotExist()
     }
 
@@ -87,7 +68,7 @@ class CitiesListTest {
     fun scrollingLoadsNextPageAndFooterRetryPreservesCities() {
         val cities = (1L..20L).map { CitiesTestFixture.city.copy(id = it, name = "City $it") }
         fixture.succeed(0, cities, total = 40)
-        compose.onNodeWithText("City 1, Russia").assertIsDisplayed()
+        awaitDisplayed("City 1, Russia")
         compose.runOnIdle { assertEquals(1, fixture.requests.size) }
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(19)
         awaitRequests(2)
@@ -99,18 +80,23 @@ class CitiesListTest {
         compose.runOnIdle { assertEquals(2, fixture.requests.size) }
         fixture.requests[1].response.complete(CitiesResult.Failure(CitiesError.Server))
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(20)
-        compose.onNodeWithText(context.getString(CitiesR.string.cities_error_generic)).assertIsDisplayed()
+        awaitDisplayed(context.getString(CitiesR.string.cities_error_generic))
         compose.onNodeWithText(context.getString(CitiesR.string.cities_retry)).performClick()
         awaitRequests(3)
         assertEquals(2, fixture.requests[2].page)
         fixture.succeed(2, listOf(CitiesTestFixture.city.copy(id = 21, name = "City 21")), total = 21)
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(20)
-        compose.onNodeWithText("City 21, Russia").assertIsDisplayed()
+        awaitDisplayed("City 21, Russia")
         compose.onNodeWithText(context.getString(CitiesR.string.cities_retry)).assertDoesNotExist()
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(0)
         compose.onNodeWithText("City 1, Russia").assertIsDisplayed()
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(20)
         compose.runOnIdle { assertEquals(3, fixture.requests.size) }
+    }
+
+    // Completing the repository response does not await Orbit state publication and rendering.
+    private fun awaitDisplayed(text: String) {
+        compose.waitUntil(5_000) { compose.onNodeWithText(text).isDisplayed() }
     }
 
     private fun awaitRequests(count: Int) = compose.waitUntil(5_000) { fixture.requests.size == count }
