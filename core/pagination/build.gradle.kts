@@ -3,5 +3,5 @@ plugins {
 }
 
 android {
-    namespace = "info.jukov.urenttestassestment.core.pagination"
+    namespace = "info.jukov.urenttestassessment.core.pagination"
 }

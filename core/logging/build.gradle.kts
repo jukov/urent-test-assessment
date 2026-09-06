@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "info.jukov.urenttestassestment.core.logging"
+    namespace = "info.jukov.urenttestassessment.core.logging"
 }
 
 dependencies {
