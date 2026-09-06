@@ -1,6 +1,6 @@
 package info.jukov.urenttestassestment
 
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -16,15 +16,19 @@ import info.jukov.urenttestassestment.feature.cities.R as CitiesR
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesError
 import info.jukov.urenttestassestment.feature.cities.domain.CitiesResult
 import info.jukov.urenttestassestment.feature.cities.presentation.CitiesRoute
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 class CitiesListTest {
+    // Queue Orbit callbacks for the Compose clock instead of resuming composition on its worker.
     @get:Rule
-    val compose = createComposeRule()
+    val compose = createComposeRule(effectContext = StandardTestDispatcher())
     private val fixture = CitiesTestFixture()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -73,7 +77,7 @@ class CitiesListTest {
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(19)
         awaitRequests(2)
         assertEquals(2, fixture.requests[1].page)
-        compose.onNodeWithText("City 20, Russia").assertIsDisplayed()
+        awaitDisplayed("City 20, Russia")
         // Repeated end-of-list events while loading must not issue another request.
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(18)
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(20)
@@ -89,12 +93,12 @@ class CitiesListTest {
         awaitDisplayed("City 21, Russia")
         compose.onNodeWithText(context.getString(CitiesR.string.cities_retry)).assertDoesNotExist()
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(0)
-        compose.onNodeWithText("City 1, Russia").assertIsDisplayed()
+        awaitDisplayed("City 1, Russia")
         compose.onNode(hasScrollToIndexAction()).performScrollToIndex(20)
         compose.runOnIdle { assertEquals(3, fixture.requests.size) }
     }
 
-    // Completing the repository response does not await Orbit state publication and rendering.
+    // Repository completion and scroll requests do not guarantee the expected row is rendered yet.
     private fun awaitDisplayed(text: String) {
         compose.waitUntil(5_000) { compose.onNodeWithText(text).isDisplayed() }
     }
