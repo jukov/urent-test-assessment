@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -5,6 +7,34 @@ plugins {
     id("urent.quality")
     id("urent.testing")
 }
+
+// Only tags on HEAD identify a release; an ancestor tag must not label newer code.
+val headTags = providers.exec {
+    workingDir(rootDir)
+    commandLine("git", "tag", "--points-at", "HEAD", "--list", "v*")
+}.standardOutput.asText.get().lineSequence().filter { it.isNotBlank() }.toList()
+require(headTags.size <= 1) { "Multiple release tags on HEAD: $headTags" }
+val candidateTag = providers.gradleProperty("candidateReleaseTag").orNull
+val headTag = headTags.singleOrNull()
+require(candidateTag == null || headTag == null || candidateTag == headTag) {
+    "candidateReleaseTag must match the release tag on HEAD"
+}
+val releaseTag = headTag ?: candidateTag
+val releaseVersion = releaseTag?.let(ReleaseVersion::fromTag)
+val signingPropertiesFile = rootProject.file(
+    providers.gradleProperty("signingProperties").getOrElse("keys/release.properties")
+)
+val signingProperties = Properties().apply {
+    if (signingPropertiesFile.isFile) signingPropertiesFile.inputStream().use { load(it) }
+}
+val signingReady = listOf("storeFile", "storePassword", "keyAlias", "keyPassword").all {
+    !signingProperties.getProperty(it).isNullOrBlank()
+}
+val validateRelease = tasks.register<ValidateReleaseTask>("validateRelease") {
+    hasVersion.set(releaseVersion != null)
+    hasSigning.set(signingReady)
+}
+tasks.matching { it.name == "preReleaseBuild" }.configureEach { dependsOn(validateRelease) }
 
 android {
     namespace = "info.jukov.urenttestassestment"
@@ -16,14 +46,25 @@ android {
         applicationId = "info.jukov.urenttestassestment"
         minSdk = 28
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = releaseVersion?.code ?: 1
+        versionName = releaseVersion?.name ?: "0.0.0-dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (signingReady) {
+            create("release") {
+                storeFile = signingPropertiesFile.parentFile.resolve(signingProperties.getProperty("storeFile"))
+                storePassword = signingProperties.getProperty("storePassword")
+                keyAlias = signingProperties.getProperty("keyAlias")
+                keyPassword = signingProperties.getProperty("keyPassword")
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             optimization {
                 enable = false
             }
